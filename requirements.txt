@@ -1,0 +1,26 @@
+# Core
+fastapi
+uvicorn
+
+# Data
+pandas
+numpy
+
+# Machine Learning
+scikit-learn
+xgboost
+
+# Config & Env
+python-dotenv
+pyyaml
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# GUI
+streamlit
+plotly
+
+# Utilities
+requests
