@@ -1,12 +1,13 @@
 from smarttradex_core.data.market_feed import MarketFeed
+from smarttradex_core.data.binance_client import BinanceClient
 
-feed = MarketFeed()
+exchange = BinanceClient()
+feed = MarketFeed(exchange)
 
 assert feed.get_latest() is None
 
-sample = {"open": 1, "close": 2}
-feed.update(sample)
+candle = feed.update()
+assert candle is not None
+assert feed.get_latest() == candle
 
-assert feed.get_latest() == sample
-
-print("MarketFeed test passed")
+print("MarketFeed exchange integration test passed")
