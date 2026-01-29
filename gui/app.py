@@ -18,3 +18,14 @@ try:
 except Exception as e:
     st.error("API not reachable")
     st.write(e)
+
+
+
+
+
+
+
+# TERMINAL 1 — Run API Server
+# uvicorn api_server.main:app --reload  (Leave this terminal running.)
+# TERMINAL 2 — Run GUI
+# streamlit run gui/app.py
