@@ -1,6 +1,9 @@
 # smarttradex_core/data/binance_client.py
 
-class BinanceClient:
+from smarttradex_core.data.exchange_base import ExchangeBase
+
+
+class BinanceClient(ExchangeBase):
     """
     Skeleton Binance client.
     Real API calls will be added later.
@@ -11,10 +14,6 @@ class BinanceClient:
         self.timeframe = timeframe
 
     def fetch_latest_candle(self):
-        """
-        Placeholder for fetching latest candle.
-        Returns dummy data for now.
-        """
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -26,8 +25,4 @@ class BinanceClient:
         }
 
     def fetch_historical_candles(self, limit: int = 100):
-        """
-        Placeholder for fetching historical candles.
-        Returns a list of dummy candles.
-        """
         return [self.fetch_latest_candle() for _ in range(limit)]
