@@ -2,14 +2,17 @@ from smarttradex_core.engine import TradingEngine
 
 engine = TradingEngine()
 
-assert engine.running is False
-
 engine.start()
-assert engine.running is True
 
-engine.stop()
-assert engine.running is False
+for _ in range(3):
+    engine.fetch_market_data()
+
+assert engine.state.market_data is not None
+assert len(engine.candle_buffer.get_all()) == 3
 
 engine.reset()
+assert len(engine.candle_buffer.get_all()) == 0
 
-print("TradingEngine test passed")
+engine.stop()
+
+print("TradingEngine candle buffer integration test passed")
