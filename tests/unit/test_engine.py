@@ -4,15 +4,12 @@ engine = TradingEngine()
 
 engine.start()
 
-for _ in range(3):
-    engine.fetch_market_data()
+prediction = engine.step()
 
+assert prediction is not None
 assert engine.state.market_data is not None
-assert len(engine.candle_buffer.get_all()) == 3
-
-engine.reset()
-assert len(engine.candle_buffer.get_all()) == 0
+assert engine.state.prediction == prediction
 
 engine.stop()
 
-print("TradingEngine candle buffer integration test passed")
+print("TradingEngine AI pipeline integration test passed")

@@ -4,6 +4,8 @@ from smarttradex_core.state import EngineState
 from smarttradex_core.data.binance_client import BinanceClient
 from smarttradex_core.data.market_feed import MarketFeed
 from smarttradex_core.data.candle_buffer import CandleBuffer
+from smarttradex_core.features.feature_engine import FeatureEngine
+from smarttradex_core.prediction.predictor import Predictor
 
 
 class TradingEngine:
@@ -15,6 +17,10 @@ class TradingEngine:
         self.exchange = BinanceClient()
         self.market_feed = MarketFeed(self.exchange)
         self.candle_buffer = CandleBuffer(max_size=100)
+
+        # AI components
+        self.feature_engine = FeatureEngine()
+        self.predictor = Predictor()
 
     def start(self):
         if self.running:
@@ -33,11 +39,21 @@ class TradingEngine:
         self.candle_buffer.clear()
         print("Engine state reset")
 
-    def fetch_market_data(self):
+    def step(self):
         """
-        Fetch one candle, store it in buffer and state.
+        Single engine step:
+        fetch data → features → prediction
         """
         candle = self.market_feed.update()
         self.candle_buffer.add_candle(candle)
+
+        features = self.feature_engine.build_features(
+            self.candle_buffer.get_all()
+        )
+
+        prediction = self.predictor.predict(features)
+
         self.state.market_data = candle
-        return candle
+        self.state.prediction = prediction
+
+        return prediction
