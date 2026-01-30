@@ -1,6 +1,8 @@
 # gui/pages/live_market.py
 
 import streamlit as st
+from components.marker_layer import render_markers
+
 from services.api_client import (
     get_engine_status,
     get_engine_config,
@@ -27,7 +29,7 @@ try:
 
     safe_render("Engine Status", status)
     safe_render("Engine Configuration", config)
-    safe_render("Markers", markers.get("markers", []))
+    render_markers(markers.get("markers", []))
 
 except Exception as e:
     st.error("API not reachable")
