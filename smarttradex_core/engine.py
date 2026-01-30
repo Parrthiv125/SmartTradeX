@@ -102,9 +102,12 @@ class TradingEngine:
         prediction = self.predictor.predict(features)
         self.state.prediction = prediction
 
-        # 6️⃣ Marker decision
         marker = self.marker_factory.create_marker(prediction)
-        self.state.markers.append(marker)
+
+        # Only store marker if action changed
+        if not self.state.markers or self.state.markers[-1]["action"] != marker["action"]:
+            self.state.markers.append(marker)
+
 
         # 7️⃣ Paper trading
         trade = self.paper_broker.process_marker(marker, close_price)
