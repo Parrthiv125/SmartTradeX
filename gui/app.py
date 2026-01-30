@@ -7,25 +7,21 @@ st.set_page_config(page_title="SmartTradeX", layout="wide")
 
 st.title("SmartTradeX Dashboard")
 
-# Call API
-API_URL = "http://127.0.0.1:8000/engine/status"
+STATUS_URL = "http://127.0.0.1:8000/engine/status"
+CONFIG_URL = "http://127.0.0.1:8000/engine/config"
 
 try:
-    response = requests.get(API_URL)
-    data = response.json()
+    status_resp = requests.get(STATUS_URL)
+    config_resp = requests.get(CONFIG_URL)
+
     st.success("API Connected")
-    st.json(data)
+
+    st.subheader("Engine Status")
+    st.json(status_resp.json())
+
+    st.subheader("Engine Configuration")
+    st.json(config_resp.json())
+
 except Exception as e:
     st.error("API not reachable")
     st.write(e)
-
-
-
-
-
-
-
-# TERMINAL 1 — Run API Server
-# uvicorn api_server.main:app --reload  (Leave this terminal running.)
-# TERMINAL 2 — Run GUI
-# streamlit run gui/app.py
