@@ -1,41 +1,35 @@
 # api_server/routes/engine.py
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 router = APIRouter()
 
 @router.post("/engine/start")
-def start_engine():
-    """
-    Start the trading engine.
-    Actual engine logic is handled elsewhere.
-    """
+def start_engine(request: Request):
+    runtime = request.app.state.runtime
+    runtime.start()
     return {
         "action": "start",
-        "status": "accepted",
-        "message": "Engine start requested"
+        "status": "ok",
+        "message": "Engine runtime started"
     }
-
 
 @router.post("/engine/stop")
-def stop_engine():
-    """
-    Stop the trading engine.
-    """
+def stop_engine(request: Request):
+    runtime = request.app.state.runtime
+    runtime.stop()
     return {
         "action": "stop",
-        "status": "accepted",
-        "message": "Engine stop requested"
+        "status": "ok",
+        "message": "Engine runtime stopped"
     }
 
-
 @router.post("/engine/reset")
-def reset_engine():
-    """
-    Reset the trading engine state.
-    """
+def reset_engine(request: Request):
+    engine = request.app.state.engine
+    engine.reset()
     return {
         "action": "reset",
-        "status": "accepted",
-        "message": "Engine reset requested"
+        "status": "ok",
+        "message": "Engine state reset"
     }
