@@ -1,6 +1,8 @@
 # gui/pages/paper_trading.py
 
 import streamlit as st
+from components.trade_table import render_trade_table
+
 from services.api_client import (
     get_positions,
     get_trades,
@@ -26,7 +28,8 @@ try:
     st.success("API Connected")
 
     safe_render("Open Positions", positions.get("positions", []))
-    safe_render("Trade History", trades.get("trades", []))
+    # safe_render("Trade History", trades.get("trades", []))
+    render_trade_table(trades.get("trades", []))
     safe_render("PnL Summary", pnl)
 
 except Exception as e:
