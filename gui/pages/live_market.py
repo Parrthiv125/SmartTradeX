@@ -1,7 +1,7 @@
 # gui/pages/live_market.py
 
 import streamlit as st
-from gui.services.api_client import (
+from services.api_client import (
     get_engine_status,
     get_engine_config,
     get_markers,
@@ -11,7 +11,13 @@ st.set_page_config(page_title="Live Market", layout="wide")
 
 st.title("Live Market")
 
-# Poll API
+def safe_render(title: str, data):
+    st.subheader(title)
+    if not data:
+        st.info("No data available.")
+    else:
+        st.json(data)
+
 try:
     status = get_engine_status()
     config = get_engine_config()
@@ -19,15 +25,10 @@ try:
 
     st.success("API Connected")
 
-    st.subheader("Engine Status")
-    st.json(status)
-
-    st.subheader("Engine Configuration")
-    st.json(config)
-
-    st.subheader("Trading Markers")
-    st.json(markers)
+    safe_render("Engine Status", status)
+    safe_render("Engine Configuration", config)
+    safe_render("Markers", markers.get("markers", []))
 
 except Exception as e:
     st.error("API not reachable")
-    st.write(e)
+    st.write(str(e))
