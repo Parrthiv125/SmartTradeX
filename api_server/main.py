@@ -3,19 +3,19 @@
 from fastapi import FastAPI
 
 # =========================
-# Core Engine Imports
+# Core Engine
 # =========================
 from smarttradex_core.engine import TradingEngine
 from smarttradex_core.lifecycle import EngineRuntime
 
 # =========================
-# API Route Imports
+# API Routes
 # =========================
-from api_server.routes.engine import router as engine_router
-from api_server.routes.state import router as state_router
-from api_server.routes.trading import router as trading_router
-from api_server.routes.markers import router as markers_router
-from api_server.routes.config import router as config_router
+from api_server.routes import engine as engine_routes
+from api_server.routes import state as state_routes
+from api_server.routes import trading as trading_routes
+from api_server.routes import markers as markers_routes
+from api_server.routes import config as config_routes
 
 # =========================
 # FastAPI App
@@ -28,18 +28,17 @@ app = FastAPI(title="SmartTradeX API")
 engine = TradingEngine()
 runtime = EngineRuntime(engine)
 
-# Expose to routes safely
 app.state.engine = engine
 app.state.runtime = runtime
 
 # =========================
 # Route Registration
 # =========================
-app.include_router(engine_router)
-app.include_router(state_router)
-app.include_router(config_router)
-app.include_router(trading_router)
-app.include_router(markers_router)
+app.include_router(engine_routes.router)
+app.include_router(state_routes.router)
+app.include_router(config_routes.router)
+app.include_router(trading_routes.router)
+app.include_router(markers_routes.router)
 
 # =========================
 # Health Check

@@ -1,28 +1,31 @@
-# smarttradex_core/data/binance_client.py
+import requests
+import time
 
-from smarttradex_core.data.exchange_base import ExchangeBase
 
-
-class BinanceClient(ExchangeBase):
+class BinanceClient:
     """
-    Skeleton Binance client.
-    Real API calls will be added later.
+    Simple REST client for Binance.
+    Beginner-safe: no websocket, no async.
     """
 
-    def __init__(self, symbol: str = "BTCUSDT", timeframe: str = "1m"):
-        self.symbol = symbol
-        self.timeframe = timeframe
+    BASE_URL = "https://api.binance.com"
 
-    def fetch_latest_candle(self):
-        return {
-            "symbol": self.symbol,
-            "timeframe": self.timeframe,
-            "open": 0.0,
-            "high": 0.0,
-            "low": 0.0,
-            "close": 0.0,
-            "volume": 0.0
+    def get_latest_candle(self, symbol="BTCUSDT", interval="1m"):
+        url = f"{self.BASE_URL}/api/v3/klines"
+        params = {
+            "symbol": symbol,
+            "interval": interval,
+            "limit": 1
         }
 
-    def fetch_historical_candles(self, limit: int = 100):
-        return [self.fetch_latest_candle() for _ in range(limit)]
+        response = requests.get(url, params=params, timeout=5)
+        data = response.json()[0]
+
+        return {
+            "open": float(data[1]),
+            "high": float(data[2]),
+            "low": float(data[3]),
+            "close": float(data[4]),
+            "volume": float(data[5]),
+            "timestamp": int(data[0])
+        }

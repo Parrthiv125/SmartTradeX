@@ -1,19 +1,19 @@
-# smarttradex_core/data/market_feed.py
-
-from smarttradex_core.data.exchange_base import ExchangeBase
+import time
 
 
 class MarketFeed:
-    def __init__(self, exchange: ExchangeBase):
+    """
+    Polls market data from exchange using REST.
+    """
+
+    def __init__(self, exchange, symbol="BTCUSDT", interval="1m"):
         self.exchange = exchange
-        self.latest_candle = None
+        self.symbol = symbol
+        self.interval = interval
 
     def update(self):
-        """
-        Fetch latest candle from exchange and store it.
-        """
-        self.latest_candle = self.exchange.fetch_latest_candle()
-        return self.latest_candle
-
-    def get_latest(self):
-        return self.latest_candle
+        time.sleep(1)  # SAFE rate limit
+        return self.exchange.get_latest_candle(
+            symbol=self.symbol,
+            interval=self.interval
+        )

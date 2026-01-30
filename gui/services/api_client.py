@@ -16,18 +16,16 @@ def get_engine_config():
 
 
 def start_engine():
-    response = requests.post(f"{BASE_URL}/engine/start")
-    return response.json()
-
+    return requests.post(f"{BASE_URL}/engine/start", timeout=5)
 
 def stop_engine():
-    response = requests.post(f"{BASE_URL}/engine/stop")
-    return response.json()
-
+    return requests.post(f"{BASE_URL}/engine/stop", timeout=5)
 
 def reset_engine():
-    response = requests.post(f"{BASE_URL}/engine/reset")
-    return response.json()
+    return requests.post(f"{BASE_URL}/engine/reset", timeout=5)
+
+def get_state():
+    return requests.get(f"{BASE_URL}/state", timeout=5).json()
 
 
 def get_positions():
@@ -48,3 +46,4 @@ def get_pnl():
 def get_markers():
     response = requests.get(f"{BASE_URL}/markers")
     return response.json()
+

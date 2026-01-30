@@ -1,16 +1,12 @@
 # api_server/routes/state.py
 
-from fastapi import APIRouter
 
-router = APIRouter()
+from fastapi import APIRouter, Request
 
-@router.get("/engine/status")
-def engine_status():
-    """
-    Temporary static endpoint.
-    Later this will return real engine state.
-    """
-    return {
-        "engine": "offline",
-        "message": "Engine not connected yet"
-    }
+router = APIRouter(prefix="/state", tags=["state"])
+
+
+@router.get("")
+def get_engine_state(request: Request):
+    engine = request.app.state.engine
+    return engine.state.snapshot()
