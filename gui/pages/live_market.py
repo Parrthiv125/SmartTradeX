@@ -3,15 +3,15 @@
 import streamlit as st
 import time
 
-from gui.services.api_client import (
+from services.api_client import (
     start_engine,
     stop_engine,
     reset_engine,
     get_state,
 )
 
-from gui.components.chart import render_chart
-from gui.components.marker_layer import render_markers
+from components.chart import render_chart
+from components.marker_layer import render_markers
 
 # ─────────────────────────────────────────────
 # Page config (MUST be first)
