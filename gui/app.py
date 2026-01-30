@@ -17,3 +17,5 @@ st.sidebar.markdown(
 )
 
 st.info("Use the sidebar to navigate between pages.")
+# gui/app.py (example sidebar)
+st.sidebar.page_link("gui/pages/live_market.py", label="Live Market")
