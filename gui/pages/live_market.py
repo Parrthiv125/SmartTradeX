@@ -82,11 +82,16 @@ try:
                 )
 
         # Render visuals
-        render_chart(market)
+        candles = state.get("candles", [])
+        render_chart(candles)
         render_markers(markers)
+
 
 except Exception as e:
     st.error("API not reachable")
     st.write(str(e))
 
 st.caption("Live data updates automatically while engine is running.")
+
+time.sleep(1)
+st.rerun()
