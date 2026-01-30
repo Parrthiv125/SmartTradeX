@@ -4,10 +4,9 @@ from fastapi import FastAPI
 
 # =========================
 # Core Engine Imports
-# (DO NOT MODIFY ENGINE CODE)
 # =========================
 from smarttradex_core.engine import TradingEngine
-from smarttradex_core.runtime import EngineRuntime
+from smarttradex_core.lifecycle import EngineRuntime
 
 # =========================
 # API Route Imports
