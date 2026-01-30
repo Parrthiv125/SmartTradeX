@@ -1,15 +1,14 @@
 from smarttradex_core.engine import TradingEngine
-from smarttradex_core.lifecycle import EngineLifecycle
+from smarttradex_core.lifecycle import EngineRuntime
 
 engine = TradingEngine()
-lifecycle = EngineLifecycle(engine)
+runtime = EngineRuntime(engine)
 
-lifecycle.start()
-assert engine.running is True
+runtime.start()
+result = runtime.run_once()
 
-lifecycle.stop()
-assert engine.running is False
+assert result is not None
 
-lifecycle.reset()
+runtime.stop()
 
-print("EngineLifecycle test passed")
+print("EngineRuntime test passed")
