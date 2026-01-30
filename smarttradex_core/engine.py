@@ -6,6 +6,7 @@ from smarttradex_core.data.market_feed import MarketFeed
 from smarttradex_core.data.candle_buffer import CandleBuffer
 from smarttradex_core.features.feature_engine import FeatureEngine
 from smarttradex_core.prediction.predictor import Predictor
+from smarttradex_core.markers.marker_factory import MarkerFactory
 
 
 class TradingEngine:
@@ -21,6 +22,7 @@ class TradingEngine:
         # AI components
         self.feature_engine = FeatureEngine()
         self.predictor = Predictor()
+        self.marker_factory = MarkerFactory()
 
     def start(self):
         if self.running:
@@ -42,7 +44,7 @@ class TradingEngine:
     def step(self):
         """
         Single engine step:
-        fetch data → features → prediction
+        data → features → prediction → marker
         """
         candle = self.market_feed.update()
         self.candle_buffer.add_candle(candle)
@@ -52,8 +54,10 @@ class TradingEngine:
         )
 
         prediction = self.predictor.predict(features)
+        marker = self.marker_factory.create_marker(prediction)
 
         self.state.market_data = candle
         self.state.prediction = prediction
+        self.state.markers.append(marker)
 
-        return prediction
+        return marker

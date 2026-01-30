@@ -4,12 +4,13 @@ engine = TradingEngine()
 
 engine.start()
 
-prediction = engine.step()
+marker = engine.step()
 
-assert prediction is not None
-assert engine.state.market_data is not None
-assert engine.state.prediction == prediction
+assert marker is not None
+assert "action" in marker
+assert engine.state.prediction is not None
+assert len(engine.state.markers) == 1
 
 engine.stop()
 
-print("TradingEngine AI pipeline integration test passed")
+print("TradingEngine marker integration test passed")
