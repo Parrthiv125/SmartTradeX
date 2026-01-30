@@ -2,6 +2,8 @@
 
 import streamlit as st
 from components.marker_layer import render_markers
+from components.chart import render_chart
+
 
 from services.api_client import (
     get_engine_status,
@@ -34,3 +36,6 @@ try:
 except Exception as e:
     st.error("API not reachable")
     st.write(str(e))
+
+render_chart()
+
