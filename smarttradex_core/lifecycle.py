@@ -28,8 +28,16 @@ class EngineRuntime:
     def run_once(self):
         """
         Run exactly ONE engine step.
-        Safe for API / GUI control.
         """
         if not self.running:
             return None
         return self.engine.step()
+
+    def run_loop(self, interval_seconds: float = 1.0):
+        """
+        Run engine continuously with a fixed interval.
+        This is blocking and must be controlled via start/stop.
+        """
+        while self.running:
+            self.engine.step()
+            time.sleep(interval_seconds)
