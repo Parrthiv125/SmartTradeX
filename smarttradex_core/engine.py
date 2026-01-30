@@ -7,6 +7,7 @@ from smarttradex_core.data.candle_buffer import CandleBuffer
 from smarttradex_core.features.feature_engine import FeatureEngine
 from smarttradex_core.prediction.predictor import Predictor
 from smarttradex_core.markers.marker_factory import MarkerFactory
+from smarttradex_core.trading.paper_broker import PaperBroker
 
 
 class TradingEngine:
@@ -14,15 +15,18 @@ class TradingEngine:
         self.state = EngineState()
         self.running = False
 
-        # market data components
+        # market data
         self.exchange = BinanceClient()
         self.market_feed = MarketFeed(self.exchange)
         self.candle_buffer = CandleBuffer(max_size=100)
 
-        # AI components
+        # AI
         self.feature_engine = FeatureEngine()
         self.predictor = Predictor()
         self.marker_factory = MarkerFactory()
+
+        # paper trading
+        self.paper_broker = PaperBroker()
 
     def start(self):
         if self.running:
@@ -43,10 +47,12 @@ class TradingEngine:
 
     def step(self):
         """
-        Single engine step:
-        data → features → prediction → marker
+        Full engine step:
+        data → prediction → marker → paper trade
         """
         candle = self.market_feed.update()
+        price = candle.get("close", 0.0)
+
         self.candle_buffer.add_candle(candle)
 
         features = self.feature_engine.build_features(
@@ -56,8 +62,16 @@ class TradingEngine:
         prediction = self.predictor.predict(features)
         marker = self.marker_factory.create_marker(prediction)
 
+        trade = self.paper_broker.process_marker(marker, price)
+
         self.state.market_data = candle
         self.state.prediction = prediction
         self.state.markers.append(marker)
 
-        return marker
+        if trade:
+            self.state.trades.append(trade)
+
+        return {
+            "marker": marker,
+            "trade": trade
+        }

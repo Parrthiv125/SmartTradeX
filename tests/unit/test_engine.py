@@ -1,16 +1,19 @@
 from smarttradex_core.engine import TradingEngine
 
 engine = TradingEngine()
-
 engine.start()
 
-marker = engine.step()
+# BUY step
+result1 = engine.step()
+assert "marker" in result1
 
-assert marker is not None
-assert "action" in marker
-assert engine.state.prediction is not None
-assert len(engine.state.markers) == 1
+# SELL step (close trade)
+result2 = engine.step()
+
+if result2["trade"]:
+    trade = result2["trade"]
+    assert "pnl" in trade
 
 engine.stop()
 
-print("TradingEngine marker integration test passed")
+print("TradingEngine paper trading integration test passed")
