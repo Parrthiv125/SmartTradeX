@@ -1,23 +1,15 @@
 # smarttradex_core/features/feature_engine.py
 
 class FeatureEngine:
-    """
-    Converts candle history into model-ready features.
-    """
+    def build_features(self, candles: list):
+        if len(candles) < 2:
+            return None
 
-    def __init__(self):
-        pass
+        prev_close = candles[-2]["close"]
+        last_close = candles[-1]["close"]
 
-    def build_features(self, candles: list) -> dict:
-        """
-        Build features from candle history.
-        Currently returns placeholder values.
-        """
-        if not candles:
-            return {}
+        price_return = (last_close - prev_close) / prev_close
 
         return {
-            "num_candles": len(candles),
-            "last_close": candles[-1].get("close", 0.0),
-            "dummy_feature": 1.0
+            "return": price_return
         }
