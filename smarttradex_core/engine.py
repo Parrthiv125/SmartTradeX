@@ -106,7 +106,11 @@ class TradingEngine:
         }
 
         # 6️⃣ Prediction (still uses 1m for now)
-        prediction = self.predictor.predict(features_1m)
+        prediction = self.predictor.predict(
+            features_1m,
+            self.state.features.get("5m")
+        )
+
         self.state.prediction = prediction
 
         # 7️⃣ Marker generation
