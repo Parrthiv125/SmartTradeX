@@ -122,8 +122,11 @@ class TradingEngine:
 
         # 8️⃣ Paper trading
         trade = self.paper_broker.process_marker(marker, close_price)
+
         if trade:
-            self.state.trades.append(trade)
+            # Keep engine state in sync with broker history
+            self.state.trades = self.paper_broker.get_trade_history()
+
 
         return {
             "price": close_price,
