@@ -55,7 +55,6 @@ st.subheader("Live Engine State")
 
 state_placeholder = st.empty()
 
-# Poll once per rerun (Streamlit reruns automatically)
 try:
     state = get_state()
 
@@ -63,6 +62,7 @@ try:
         st.info("Waiting for market data...")
     else:
         market = state["market_data"]
+        candles = state.get("candles", [])
         markers = state.get("markers", [])
 
         with state_placeholder.container():
@@ -71,7 +71,7 @@ try:
             with col1:
                 st.metric(
                     label="BTC Price",
-                    value=market["close"]
+                    value=market.get("close")
                 )
 
             with col2:
@@ -81,11 +81,20 @@ try:
                     value=last_marker
                 )
 
-        # Render visuals
-        candles = state.get("candles", [])
-        render_chart(candles)
-        render_markers(markers)
+        # ─────────────────────────────────────────────
+        # Chart with BUY / SELL overlay
+        # ─────────────────────────────────────────────
 
+        render_chart(
+            candles=candles,
+            markers=markers
+        )
+
+        # ─────────────────────────────────────────────
+        # Marker list (textual)
+        # ─────────────────────────────────────────────
+
+        render_markers(markers)
 
 except Exception as e:
     st.error("API not reachable")
@@ -93,5 +102,6 @@ except Exception as e:
 
 st.caption("Live data updates automatically while engine is running.")
 
+# Controlled polling (sync, safe)
 time.sleep(1)
 st.rerun()
