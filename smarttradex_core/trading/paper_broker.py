@@ -1,35 +1,60 @@
-# smarttradex_core/trading/paper_broker.py
-
-from smarttradex_core.trading.position_manager import PositionManager
-from smarttradex_core.trading.order_simulator import OrderSimulator
-from smarttradex_core.trading.pnl_calculator import PnLCalculator
-
-
 class PaperBroker:
     """
-    Coordinates paper trading execution.
+    Simulates paper trading with basic risk management.
+    Supports ONE open position at a time.
     """
 
     def __init__(self):
-        self.position_manager = PositionManager()
-        self.order_simulator = OrderSimulator(self.position_manager)
-        self.pnl_calculator = PnLCalculator()
-        self.trades = []
+        self.position = None  # None or dict
+
+        # Risk parameters (simple & fixed)
+        self.stop_loss_pct = -0.01    # -1%
+        self.take_profit_pct = 0.02   # +2%
 
     def process_marker(self, marker: dict, price: float):
         """
-        Process a marker at a given price.
+        Process a marker and decide trade actions.
+        Returns trade dict if a trade is closed.
         """
-        result = self.order_simulator.execute(marker, price)
 
-        # trade closed
-        if isinstance(result, dict):
-            pnl = self.pnl_calculator.calculate(result)
-            trade = {**result, **pnl}
-            self.trades.append(trade)
+        # ─────────────────────────────────────────────
+        # NO OPEN POSITION → check for entry
+        # ─────────────────────────────────────────────
+        if self.position is None:
+            if marker["action"] == "BUY":
+                self.position = {
+                    "side": "LONG",
+                    "entry_price": price,
+                    "status": "OPEN"
+                }
+            return None
+
+        # ─────────────────────────────────────────────
+        # OPEN POSITION → check for exit
+        # ─────────────────────────────────────────────
+        entry_price = self.position["entry_price"]
+        pnl_pct = (price - entry_price) / entry_price
+
+        exit_reason = None
+
+        if pnl_pct <= self.stop_loss_pct:
+            exit_reason = "STOP_LOSS"
+
+        elif pnl_pct >= self.take_profit_pct:
+            exit_reason = "TAKE_PROFIT"
+
+        elif marker["action"] == "SELL":
+            exit_reason = "SIGNAL_EXIT"
+
+        if exit_reason:
+            trade = {
+                "side": "LONG",
+                "entry_price": entry_price,
+                "exit_price": price,
+                "pnl_pct": round(pnl_pct, 4),
+                "reason": exit_reason
+            }
+            self.position = None
             return trade
 
         return None
-
-    def get_trades(self):
-        return self.trades
