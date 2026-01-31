@@ -29,7 +29,7 @@ try:
 except Exception as e:
     st.error("API not reachable")
     st.write(e)
-render_trade_table(trades)
+    render_trade_table(trades)
 
 except Exception as e:
     st.error("API not reachable")
