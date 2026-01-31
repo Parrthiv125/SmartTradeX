@@ -4,11 +4,13 @@ import time
 class PaperBroker:
     """
     Simulates paper trading with basic risk management.
+    Keeps full trade history.
     Supports ONE open position at a time.
     """
 
     def __init__(self):
         self.position = None
+        self.trades = []  # closed trades history
 
         # Risk parameters
         self.stop_loss_pct = -0.01     # -1%
@@ -66,9 +68,18 @@ class PaperBroker:
                 "exit_price": price,
                 "pnl_pct": round(pnl_pct, 4),
                 "hold_seconds": int(held_seconds),
-                "reason": exit_reason
+                "reason": exit_reason,
+                "exit_time": current_time
             }
+
+            self.trades.append(trade)
             self.position = None
             return trade
 
         return None
+
+    def get_trade_history(self):
+        """
+        Return all closed trades.
+        """
+        return self.trades
