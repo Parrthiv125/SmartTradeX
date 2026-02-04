@@ -15,7 +15,12 @@ st.title("Paper Trading")
 # -----------------------------
 try:
     position = get_positions()
-    render_position_status(position)
+
+    if position:
+        render_position_status(position)
+    else:
+        render_position_status(None)
+
 except Exception as e:
     st.error("Could not fetch position status")
     st.write(str(e))
@@ -23,7 +28,7 @@ except Exception as e:
 st.divider()
 
 # -----------------------------
-# TRADE HISTORY
+# TRADE HISTORY TABLE
 # -----------------------------
 try:
     trades = get_trades()
