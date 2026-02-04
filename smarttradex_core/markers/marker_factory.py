@@ -1,16 +1,17 @@
-# smarttradex_core/markers/marker_factory.py
-
 class MarkerFactory:
-    def create_marker(self, prediction: float):
-        if prediction > 0.001:
+    def create_marker(self, prediction):
+        # prediction is now a dict, not a float
+        value = prediction.get("value", 0.0)
+
+        if value > 0.001:
             action = "BUY"
-        elif prediction < -0.001:
+        elif value < -0.001:
             action = "SELL"
         else:
             action = "HOLD"
 
         return {
             "action": action,
-            "confidence": min(abs(prediction) * 100, 1.0),
-            "delta": prediction
+            "confidence": prediction.get("confidence", 0.0),
+            "delta": value
         }
