@@ -27,26 +27,19 @@ def render_trade_table(trades):
         st.info("No trades executed yet.")
         return
 
-    # Render table manually to allow row coloring
+    # Render table rows as clickable buttons
     for trade in trades:
         row_style = get_trade_row_color(trade)
 
         symbol = trade.get("symbol", "")
         side = trade.get("side", "")
         pnl = trade.get("pnl_pct", 0.0)
-
         reason = trade.get("exit_reason", "—")
         hold_time = trade.get("hold_time_sec", 0)
+        trade_time = trade.get("exit_time")
 
-        st.markdown(
-            f"""
-            <div style="{row_style} padding: 6px; border-bottom: 1px solid #ddd;">
-                <strong>{symbol}</strong> |
-                {side} |
-                {pnl:.2f}% |
-                {reason} |
-                {hold_time}s
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        if st.button(
+            f"{symbol} | {side} | {pnl:.2f}% | {reason} | {hold_time}s",
+            key=f"trade_{trade_time}"
+        ):
+            st.session_state["selected_trade_time"] = trade_time
