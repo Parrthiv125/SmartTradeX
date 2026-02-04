@@ -1,0 +1,222 @@
+🧠 HOW TO READ SWAGGER CORRECTLY (IMPORTANT)
+
+Swagger splits things into sections:
+
+Request URL → where the call went
+
+Server response
+
+Code: 200 ← ✅ THIS IS HTTP 200
+
+Response body
+
+Responses
+
+200 Successful Response
+
+So you actually see 200 twice:
+
+Under Server response
+
+Under Responses → Successful Response
+
+❌ WHEN IT WOULD BE WRONG
+
+If something was broken, you would see:
+
+500 → runtime crash
+
+404 → route not found
+
+422 → request validation error
+
+You see none of those.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Dev B does NOT move forward in parallel with core logic anymore.
+
+From this point onward:
+
+Dev A drives progress.
+Dev B follows behind to visualize, polish, and verify.
+
+This is intentional and correct.
+
+📌 DEV B — FUTURE ROLE (CLEAR & FIXED)
+
+Dev B is now in SUPPORT MODE, not FEATURE MODE.
+
+Her work happens only after Dev A completes a logical milestone.
+
+✅ WHAT DEV B WILL DO (STEP-BY-STEP, FUTURE)
+🟢 WHEN YOU (DEV A) FINISH: Chart Refinement
+
+(Real candles, overlays, better visuals)
+
+👉 Then Dev B does:
+
+Improve chart UI (colors, labels, legends)
+
+Make BUY/SELL markers visually clear
+
+Ensure chart doesn’t lag or freeze
+
+Minor UI fixes only
+
+📁 Files:
+
+gui/components/chart.py
+gui/components/marker_layer.py
+
+🟢 WHEN YOU FINISH: First BUY / SELL Logic
+
+(Deterministic strategy, no ML)
+
+👉 Then Dev B does:
+
+Verify BUY/SELL appears correctly
+
+Improve marker display (icons, colors)
+
+Improve trade table readability
+
+Show trade status clearly (OPEN / CLOSED)
+
+📁 Files:
+
+gui/components/trade_table.py
+gui/components/metrics.py
+
+🟢 WHEN YOU FINISH: Paper Trading Validation
+
+(PnL, positions stable)
+
+👉 Then Dev B does:
+
+Add filters (today / all trades)
+
+Improve metrics layout
+
+Optional CSV export button
+
+UI-only analytics (no backend math)
+
+📁 Files:
+
+gui/pages/paper_trading.py
+
+🟡 LATER (OPTIONAL, ONLY IF ASKED)
+
+Analytics dashboard
+
+Charts of equity curve
+
+Drawdown visualization
+
+🚫 WHAT DEV B WILL NOT DO ANYMORE
+
+From now on, Dev B must never:
+
+❌ Add engine logic
+
+❌ Suggest new API routes
+
+❌ Touch smarttradex_core
+
+❌ Jump to ML
+
+❌ Propose architecture changes
+
+❌ Introduce WebSockets / async
+
+If her ChatGPT suggests these → it is wrong.
+
+🧠 THE CORRECT MENTAL MODEL (PIN THIS)
+
+Dev A = decision maker (what to trade)
+Dev B = observer & presenter (how it looks)
+
+This is exactly how real trading teams work.
+
+🟢 RIGHT NOW — WHAT SHOULD DEV B DO?
+✅ RIGHT NOW (IMMEDIATE)
+
+Dev B should:
+
+Pull latest code
+
+Run the app
+
+Verify:
+
+Engine starts/stops
+
+Price updates
+
+Markers update
+
+Do nothing else
+
+No new tasks until you finish the next milestone.
+
+🔔 FINAL CHECK (IMPORTANT)
+
+Reply with one of these, and we proceed:
+
+Dev B will wait for Dev A milestone
+
+Dev B will do UI polish only
