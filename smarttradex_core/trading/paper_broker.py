@@ -64,13 +64,24 @@ class PaperBroker:
         if exit_reason:
             trade = {
                 "side": "LONG",
-                "entry_price": entry_price,
-                "exit_price": price,
-                "pnl_pct": round(pnl_pct, 4),
+
+                # Prices
+                "entry_price": float(entry_price),
+                "exit_price": float(price),
+
+                # Time fields (GUI safe)
+                "entry_time": float(entry_time),
+                "exit_time": float(current_time),
+                "timestamp": float(current_time),
+
+                # Performance
+                "pnl_pct": float(round(pnl_pct, 4)),
                 "hold_seconds": int(held_seconds),
-                "reason": exit_reason,
-                "exit_time": current_time
+
+                # Metadata
+                "reason": exit_reason
             }
+
 
             self.trades.append(trade)
             self.position = None

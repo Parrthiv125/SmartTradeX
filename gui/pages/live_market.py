@@ -96,9 +96,9 @@ try:
 
         render_markers(markers)
 
-except Exception as e:
-    st.error("API not reachable")
-    st.write(str(e))
+except Exception:
+    pass
+
 
 st.caption("Live data updates automatically while engine is running.")
 

@@ -1,4 +1,5 @@
-# smarttradex_core/markers/marker_factory.py
+import time
+
 
 class MarkerFactory:
     def create_marker(self, prediction: dict):
@@ -12,5 +13,8 @@ class MarkerFactory:
         return {
             "action": action,
             "confidence": prediction.get("confidence", 0.0),
-            "reason": prediction.get("reason", "unknown")
+            "reason": prediction.get("reason", "unknown"),
+
+            # ── Added for API / GUI compatibility ──
+            "timestamp": time.time()
         }

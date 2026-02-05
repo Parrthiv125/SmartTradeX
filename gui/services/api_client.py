@@ -1,71 +1,95 @@
 import requests
+import time
 
 BASE_URL = "http://127.0.0.1:8000"
 
+# ─────────────────────────────────────────────
+# INTERNAL SAFE REQUEST WRAPPER
+# ─────────────────────────────────────────────
+
+def safe_get(endpoint, retries=2, timeout=8):
+    url = f"{BASE_URL}{endpoint}"
+
+    for _ in range(retries):
+        try:
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            time.sleep(0.3)
+
+    return None
+
+
+def safe_post(endpoint, timeout=5):
+    url = f"{BASE_URL}{endpoint}"
+
+    try:
+        return requests.post(url, timeout=timeout)
+    except Exception:
+        return None
+
+
+# ─────────────────────────────────────────────
+# ENGINE
+# ─────────────────────────────────────────────
 
 def get_engine_status():
-    try:
-        return requests.get(f"{BASE_URL}/engine/status", timeout=5).json()
-    except Exception:
-        return {}
+    data = safe_get("/engine/status")
+    return data or {}
 
 
 def get_engine_config():
-    try:
-        return requests.get(f"{BASE_URL}/engine/config", timeout=5).json()
-    except Exception:
-        return {}
+    data = safe_get("/engine/config")
+    return data or {}
 
 
 def start_engine():
-    return requests.post(f"{BASE_URL}/engine/start", timeout=5)
+    return safe_post("/engine/start")
 
 
 def stop_engine():
-    return requests.post(f"{BASE_URL}/engine/stop", timeout=5)
+    return safe_post("/engine/stop")
 
 
 def reset_engine():
-    return requests.post(f"{BASE_URL}/engine/reset", timeout=5)
+    return safe_post("/engine/reset")
 
+
+# ─────────────────────────────────────────────
+# STATE
+# ─────────────────────────────────────────────
 
 def get_state():
-    try:
-        return requests.get(f"{BASE_URL}/state", timeout=5).json()
-    except Exception:
-        return {}
+    data = safe_get("/state")
+    return data or {}
 
+
+# ─────────────────────────────────────────────
+# TRADING
+# ─────────────────────────────────────────────
 
 def get_positions():
-    try:
-        return requests.get(f"{BASE_URL}/trading/positions", timeout=5).json()
-    except Exception:
-        return {}
+    data = safe_get("/trading/positions")
+    return data or {}
 
 
 def get_trades():
-    """
-    Task 1:
-    Fetch real paper trades from API and return trade list only.
-    """
-    try:
-        response = requests.get(f"{BASE_URL}/trading/trades", timeout=5)
-        response.raise_for_status()
-        data = response.json()
+    data = safe_get("/trading/trades")
+    if data:
         return data.get("trades", [])
-    except Exception:
-        return []
+    return []
 
 
 def get_pnl():
-    try:
-        return requests.get(f"{BASE_URL}/trading/pnl", timeout=5).json()
-    except Exception:
-        return {}
+    data = safe_get("/trading/pnl")
+    return data or {}
 
+
+# ─────────────────────────────────────────────
+# MARKERS
+# ─────────────────────────────────────────────
 
 def get_markers():
-    try:
-        return requests.get(f"{BASE_URL}/markers", timeout=5).json()
-    except Exception:
-        return {}
+    data = safe_get("/markers")
+    return data or {}

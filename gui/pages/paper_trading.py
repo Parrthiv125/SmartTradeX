@@ -34,6 +34,5 @@ try:
     trades = get_trades()
     st.success("API Connected")
     render_trade_table(trades)
-except Exception as e:
-    st.error("API not reachable")
-    st.write(str(e))
+except Exception:
+    pass   
