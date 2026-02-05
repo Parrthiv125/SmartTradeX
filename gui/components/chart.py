@@ -1,5 +1,3 @@
-# gui/components/chart.py
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -8,18 +6,27 @@ import plotly.graph_objects as go
 def render_chart(candles: list, markers: list):
     """
     Render price chart with BUY / SELL overlays.
+    GUI ONLY — no trading logic.
     """
 
+    # -----------------------------
+    # Guard: no candle data
+    # -----------------------------
     if not candles:
         st.info("No market data available.")
         return
 
-    # --- Price Data ---
+    # -----------------------------
+    # Prepare candle dataframe
+    # -----------------------------
     df = pd.DataFrame(candles)
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
 
     fig = go.Figure()
 
+    # -----------------------------
+    # Price line
+    # -----------------------------
     fig.add_trace(
         go.Scatter(
             x=df["timestamp"],
@@ -30,10 +37,27 @@ def render_chart(candles: list, markers: list):
         )
     )
 
-    # --- Marker Overlay ---
-    buys = [m for m in markers if m["action"] == "BUY"]
-    sells = [m for m in markers if m["action"] == "SELL"]
+    # -----------------------------
+    # SAFE marker filtering
+    # (prevents chart disappearing)
+    # -----------------------------
+    buys = [
+        m for m in markers
+        if m.get("action") == "BUY"
+        and m.get("price") is not None
+        and m.get("timestamp") is not None
+    ]
 
+    sells = [
+        m for m in markers
+        if m.get("action") == "SELL"
+        and m.get("price") is not None
+        and m.get("timestamp") is not None
+    ]
+
+    # -----------------------------
+    # BUY markers
+    # -----------------------------
     if buys:
         fig.add_trace(
             go.Scatter(
@@ -41,10 +65,16 @@ def render_chart(candles: list, markers: list):
                 y=[m["price"] for m in buys],
                 mode="markers",
                 name="BUY",
-                marker=dict(symbol="triangle-up", size=12),
+                marker=dict(
+                    symbol="triangle-up",
+                    size=12,
+                ),
             )
         )
 
+    # -----------------------------
+    # SELL markers
+    # -----------------------------
     if sells:
         fig.add_trace(
             go.Scatter(
@@ -52,10 +82,16 @@ def render_chart(candles: list, markers: list):
                 y=[m["price"] for m in sells],
                 mode="markers",
                 name="SELL",
-                marker=dict(symbol="triangle-down", size=12),
+                marker=dict(
+                    symbol="triangle-down",
+                    size=12,
+                ),
             )
         )
 
+    # -----------------------------
+    # Layout
+    # -----------------------------
     fig.update_layout(
         height=500,
         margin=dict(l=20, r=20, t=30, b=20),
@@ -64,4 +100,4 @@ def render_chart(candles: list, markers: list):
         showlegend=True,
     )
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)

@@ -9,7 +9,8 @@ def render_position_status(position):
 
     st.subheader("Active Position")
 
-    if not position:
+    # No position OR position has no valid side
+    if not position or not position.get("side"):
         st.success("No active position")
         return
 
@@ -18,7 +19,6 @@ def render_position_status(position):
     pnl_pct = position.get("pnl_pct", 0.0)
     hold_time = position.get("hold_time_sec", 0)
 
-    # Color PnL text
     pnl_color = "green" if pnl_pct > 0 else "red" if pnl_pct < 0 else "gray"
 
     st.markdown(
