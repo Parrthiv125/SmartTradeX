@@ -27,10 +27,7 @@ def render_trade_table(trades):
         st.info("No trades executed yet.")
         return
 
-    # Render table rows as clickable buttons
     for trade in trades:
-        row_style = get_trade_row_color(trade)
-
         symbol = trade.get("symbol", "")
         side = trade.get("side", "")
         pnl = trade.get("pnl_pct", 0.0)
@@ -40,6 +37,6 @@ def render_trade_table(trades):
 
         if st.button(
             f"{symbol} | {side} | {pnl:.2f}% | {reason} | {hold_time}s",
-            key=f"trade_{trade_time}"
+            key=f"trade_{trade.get('trade_id', trade_time)}"
         ):
             st.session_state["selected_trade_time"] = trade_time
