@@ -4,9 +4,14 @@ from smarttradex_core.trading.position_sizer import PositionSizer
 
 class PaperBroker:
     """
-    Simulates paper trading with basic risk management.
-    Keeps full trade history.
+    Simulates paper trading with risk management.
     Supports ONE open position at a time.
+    Includes:
+
+    • Position sizing
+    • Confidence filters
+    • Cooldown filter
+    • SL / TP / Time exits
     """
 
     def __init__(self):
@@ -14,30 +19,41 @@ class PaperBroker:
         # ─────────────────────────────
         # Capital & Position Sizing
         # ─────────────────────────────
-        self.capital = 10000  # Default paper capital
+        self.capital = 10000
         self.position_sizer = PositionSizer(self.capital, 0.02)
 
-        # Confidence thresholds
+        # ─────────────────────────────
+        # Confidence Filters
+        # ─────────────────────────────
         self.entry_confidence_threshold = 0.60
         self.exit_confidence_threshold = 0.45
 
+        # ─────────────────────────────
+        # Cooldown Control
+        # ─────────────────────────────
+        self.trade_cooldown_seconds = 60
+        self.last_trade_time = 0
+
+        # ─────────────────────────────
+        # Position + History
+        # ─────────────────────────────
         self.position = None
-        self.trades = []  # Closed trades history
+        self.trades = []
 
         # ─────────────────────────────
         # Risk Parameters
         # ─────────────────────────────
-        self.stop_loss_pct = -0.01     # -1%
-        self.take_profit_pct = 0.02    # +2%
-        self.max_hold_seconds = 300    # 5 minutes
+        self.stop_loss_pct = -0.01
+        self.take_profit_pct = 0.02
+        self.max_hold_seconds = 300
 
     # ─────────────────────────────────────────────
     # PROCESS MARKERS
     # ─────────────────────────────────────────────
     def process_marker(self, marker: dict, price: float):
         """
-        Process a marker and decide trade actions.
-        Returns trade dict if a trade is closed.
+        Processes prediction marker and executes trades.
+        Returns trade dict if position closes.
         """
 
         current_time = time.time()
@@ -46,17 +62,27 @@ class PaperBroker:
         confidence = marker.get("confidence", 0.0)
 
         # =========================================================
-        # NO OPEN POSITION → ENTRY LOGIC
+        # ENTRY LOGIC (NO OPEN POSITION)
         # =========================================================
         if self.position is None:
 
-            # Confidence gate for entry
+            # Cooldown check
+            time_since_last_trade = (
+                current_time - self.last_trade_time
+            )
+
+            if time_since_last_trade < self.trade_cooldown_seconds:
+                return None
+
+            # Confidence gate
             if (
                 action == "BUY"
                 and confidence >= self.entry_confidence_threshold
             ):
 
-                qty = self.position_sizer.calculate_position_size(price)
+                qty = self.position_sizer.calculate_position_size(
+                    price
+                )
 
                 self.position = {
                     "side": "LONG",
@@ -70,7 +96,7 @@ class PaperBroker:
             return None
 
         # =========================================================
-        # OPEN POSITION → EXIT LOGIC
+        # EXIT LOGIC (OPEN POSITION)
         # =========================================================
         entry_price = self.position["entry_price"]
         entry_time = self.position["entry_time"]
@@ -115,7 +141,7 @@ class PaperBroker:
                 # Quantity
                 "qty": float(qty),
 
-                # Time fields
+                # Time
                 "entry_time": float(entry_time),
                 "exit_time": float(current_time),
                 "timestamp": float(current_time),
@@ -127,7 +153,9 @@ class PaperBroker:
 
                 # Metadata
                 "reason": exit_reason,
-                "entry_confidence": self.position.get("entry_confidence")
+                "entry_confidence": self.position.get(
+                    "entry_confidence"
+                )
             }
 
             # Store trade
@@ -136,6 +164,9 @@ class PaperBroker:
             # Update capital
             self.capital += pnl_value
             self.position_sizer.update_capital(self.capital)
+
+            # Update cooldown timestamp
+            self.last_trade_time = current_time
 
             # Reset position
             self.position = None
@@ -148,5 +179,5 @@ class PaperBroker:
     # HISTORY ACCESS
     # ─────────────────────────────────────────────
     def get_trade_history(self):
-        """Return all closed trades."""
+        """Return closed trades."""
         return self.trades
