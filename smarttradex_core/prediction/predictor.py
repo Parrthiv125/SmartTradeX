@@ -100,5 +100,7 @@ class Predictor:
             f"[RULE] 1m={round(r1,5)} "
             f"5m={round(r5,5)} → {action}"
         )
+        print("PREDICTION OUTPUT →", prediction)
 
         return prediction
+
