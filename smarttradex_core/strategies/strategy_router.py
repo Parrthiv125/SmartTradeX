@@ -12,23 +12,15 @@ class StrategyRouter:
 
     def __init__(self):
 
-        # Initialize all strategies
         self.momentum = MomentumStrategy()
         self.mean_reversion = MeanReversionStrategy()
         self.breakout = BreakoutStrategy()
         self.swing = SwingStrategy()
 
     # ─────────────────────────────────────────────
-    # MAIN ROUTING FUNCTION
+    # ROUTING LOGIC
     # ─────────────────────────────────────────────
     def route(self, prediction: dict, regime: str):
-        """
-        Routes prediction to the correct strategy.
-
-        :param prediction: predictor output
-        :param regime: market regime (trend / range / volatile)
-        :return: marker dict
-        """
 
         if regime == "trend":
             return self.momentum.generate_signal(prediction)
@@ -40,5 +32,4 @@ class StrategyRouter:
             return self.breakout.generate_signal(prediction)
 
         else:
-            # Default fallback
             return self.swing.generate_signal(prediction)

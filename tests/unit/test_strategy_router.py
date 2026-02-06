@@ -14,7 +14,7 @@ def run_test():
 
     for r in regimes:
         signal = router.route(prediction, r)
-        print(f"Regime: {r} → Signal:", signal)
+        print(f"{r} → {signal}")
 
     print("Strategy router test passed")
 
