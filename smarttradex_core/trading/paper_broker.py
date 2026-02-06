@@ -17,6 +17,10 @@ class PaperBroker:
         self.capital = 10000  # Default paper capital
         self.position_sizer = PositionSizer(self.capital, 0.02)
 
+        # Confidence thresholds
+        self.entry_confidence_threshold = 0.60
+        self.exit_confidence_threshold = 0.45
+
         self.position = None
         self.trades = []  # Closed trades history
 
@@ -38,12 +42,19 @@ class PaperBroker:
 
         current_time = time.time()
 
+        action = marker.get("action")
+        confidence = marker.get("confidence", 0.0)
+
         # =========================================================
         # NO OPEN POSITION → ENTRY LOGIC
         # =========================================================
         if self.position is None:
 
-            if marker["action"] == "BUY":
+            # Confidence gate for entry
+            if (
+                action == "BUY"
+                and confidence >= self.entry_confidence_threshold
+            ):
 
                 qty = self.position_sizer.calculate_position_size(price)
 
@@ -52,7 +63,8 @@ class PaperBroker:
                     "entry_price": float(price),
                     "qty": float(qty),
                     "entry_time": float(current_time),
-                    "status": "OPEN"
+                    "status": "OPEN",
+                    "entry_confidence": float(confidence)
                 }
 
             return None
@@ -71,7 +83,7 @@ class PaperBroker:
 
         exit_reason = None
 
-        # Risk exits
+        # ───────────── Risk exits ─────────────
         if pnl_pct <= self.stop_loss_pct:
             exit_reason = "STOP_LOSS"
 
@@ -81,8 +93,12 @@ class PaperBroker:
         elif held_seconds >= self.max_hold_seconds:
             exit_reason = "TIME_EXIT"
 
-        elif marker["action"] == "SELL":
+        elif action == "SELL":
             exit_reason = "SIGNAL_EXIT"
+
+        # ───────────── Confidence decay exit ─────────────
+        elif confidence < self.exit_confidence_threshold:
+            exit_reason = "CONFIDENCE_DROP"
 
         # =========================================================
         # CLOSE TRADE
@@ -110,7 +126,8 @@ class PaperBroker:
                 "hold_seconds": int(held_seconds),
 
                 # Metadata
-                "reason": exit_reason
+                "reason": exit_reason,
+                "entry_confidence": self.position.get("entry_confidence")
             }
 
             # Store trade
