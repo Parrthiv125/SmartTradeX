@@ -34,11 +34,8 @@ try:
     state = get_state()
 
     # Safely extract engine state (supports different API keys)
-    engine_state = (
-        state.get("engine")
-        or state.get("engine_state")
-        or {}
-    )
+    engine_state = state
+
 
     # Render centralized engine controls
     render_engine_controls(engine_state)
