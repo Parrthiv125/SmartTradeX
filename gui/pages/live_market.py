@@ -3,18 +3,14 @@
 import streamlit as st
 import time
 
-from services.api_client import (
-    start_engine,
-    stop_engine,
-    reset_engine,
-    get_state,
-)
-
+from services.api_client import get_state
 from components.chart import render_chart
 from components.marker_layer import render_markers
+from components.controls import render_engine_controls
+
 
 # ─────────────────────────────────────────────
-# Page config (MUST be first)
+# Page config (MUST be first Streamlit call)
 # ─────────────────────────────────────────────
 
 st.set_page_config(
@@ -24,31 +20,9 @@ st.set_page_config(
 
 st.title("📈 Live Market")
 
-# ─────────────────────────────────────────────
-# Engine controls
-# ─────────────────────────────────────────────
-
-st.subheader("Engine Controls")
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    if st.button("▶ Start Engine"):
-        start_engine()
-        st.success("Engine started")
-
-with c2:
-    if st.button("⏸ Stop Engine"):
-        stop_engine()
-        st.warning("Engine stopped")
-
-with c3:
-    if st.button("♻ Reset Engine"):
-        reset_engine()
-        st.info("Engine reset")
 
 # ─────────────────────────────────────────────
-# Live state polling
+# Live Engine State
 # ─────────────────────────────────────────────
 
 st.subheader("Live Engine State")
@@ -56,12 +30,22 @@ st.subheader("Live Engine State")
 state_placeholder = st.empty()
 
 try:
+    # Fetch full engine state from API
     state = get_state()
 
+    # Safely extract engine state (supports different API keys)
+    engine_state = state
+
+
+    # Render centralized engine controls
+    render_engine_controls(engine_state)
+
+    # If market data is not ready yet
     if not state or not state.get("market_data"):
         st.info("Waiting for market data...")
+
     else:
-        market = state["market_data"]
+        market = state.get("market_data", {})
         candles = state.get("candles", [])
         markers = state.get("markers", [])
 
@@ -71,18 +55,23 @@ try:
             with col1:
                 st.metric(
                     label="BTC Price",
-                    value=market.get("close")
+                    value=market.get("close", "—")
                 )
 
             with col2:
-                last_marker = markers[-1]["action"] if markers else "NONE"
+                last_marker = (
+                    markers[-1].get("action")
+                    if markers and isinstance(markers[-1], dict)
+                    else "NONE"
+                )
+
                 st.metric(
                     label="Last Marker",
                     value=last_marker
                 )
 
         # ─────────────────────────────────────────────
-        # Chart with BUY / SELL overlay
+        # Chart with markers
         # ─────────────────────────────────────────────
 
         render_chart(
@@ -96,12 +85,18 @@ try:
 
         render_markers(markers)
 
-except Exception:
-    pass
+except Exception as e:
+    st.error("API not reachable")
+    st.write(str(e))
 
 
 st.caption("Live data updates automatically while engine is running.")
 
-# Controlled polling (sync, safe)
-time.sleep(1)
-st.rerun()
+
+# ─────────────────────────────────────────────
+# Controlled polling (safe & engine-aware)
+# ─────────────────────────────────────────────
+
+if engine_state.get("running"):
+    time.sleep(1)
+    st.rerun()

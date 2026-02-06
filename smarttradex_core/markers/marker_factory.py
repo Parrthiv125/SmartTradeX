@@ -2,10 +2,10 @@ import time
 
 
 class MarkerFactory:
-    def create_marker(self, prediction: dict, price: float):
+    def create_marker(self, prediction: dict):
         """
         Convert predictor output into a marker.
-        Beginner-safe and GUI-safe.
+        Engine-safe and GUI-safe.
         """
 
         action = prediction.get("action", "HOLD")
@@ -17,5 +17,5 @@ class MarkerFactory:
 
             # Required for chart plotting
             "timestamp": time.time(),
-            "price": price
+            "price": prediction.get("price")  # may be None
         }
