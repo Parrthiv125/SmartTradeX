@@ -1,28 +1,72 @@
 # smarttradex_core/features/feature_engine.py
 
 import numpy as np
+import pandas as pd
 
 
 class FeatureEngine:
     """
-    Builds ML-ready feature vectors from candle buffers.
+    Advanced ML feature builder.
 
-    Supports:
-    - 1m returns
+    Generates:
     - Multi-horizon returns
-    - Rolling volatility
+    - Volatility
+    - RSI
+    - EMA trend signals
+    - Trend slope
     """
+
+    # ─────────────────────────────────────────────
+    # RSI
+    # ─────────────────────────────────────────────
+    def calculate_rsi(self, closes, period=14):
+
+        series = pd.Series(closes)
+
+        delta = series.diff()
+
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+
+        avg_gain = gain.rolling(period).mean()
+        avg_loss = loss.rolling(period).mean()
+
+        rs = avg_gain / avg_loss
+
+        rsi = 100 - (100 / (1 + rs))
+
+        return rsi.iloc[-1]
+
+    # ─────────────────────────────────────────────
+    # EMA
+    # ─────────────────────────────────────────────
+    def calculate_ema(self, closes, span):
+
+        return (
+            pd.Series(closes)
+            .ewm(span=span, adjust=False)
+            .mean()
+            .iloc[-1]
+        )
+
+    # ─────────────────────────────────────────────
+    # TREND SLOPE
+    # ─────────────────────────────────────────────
+    def calculate_trend_slope(self, closes, window=10):
+
+        y = np.array(closes[-window:])
+        x = np.arange(window)
+
+        slope = np.polyfit(x, y, 1)[0]
+
+        return slope
 
     # ─────────────────────────────────────────────
     # BUILD FULL FEATURE VECTOR
     # ─────────────────────────────────────────────
-    def build_features(self, candles: list):
-        """
-        Expects list of candle dicts with 'close'.
-        Requires at least 20 candles.
-        """
+    def build_features(self, candles):
 
-        if len(candles) < 20:
+        if len(candles) < 50:
             return None
 
         closes = [c["close"] for c in candles]
@@ -39,52 +83,27 @@ class FeatureEngine:
 
         vol_15 = np.std(closes[-15:])
 
+        # ───────── RSI ─────────
+        rsi = self.calculate_rsi(closes)
+
+        # ───────── EMA ─────────
+        ema_fast = self.calculate_ema(closes, 9)
+        ema_slow = self.calculate_ema(closes, 21)
+
+        ema_spread = ema_fast - ema_slow
+
+        # ───────── TREND ─────────
+        trend_slope = self.calculate_trend_slope(closes)
+
         return {
             "ret_1": ret_1,
             "ret_5": ret_5,
             "ret_15": ret_15,
             "vol_5": vol_5,
-            "vol_15": vol_15
-        }
-
-    # ─────────────────────────────────────────────
-    # LEGACY 1M FEATURE (for compatibility)
-    # ─────────────────────────────────────────────
-    def build_1m_legacy(self, candles: list):
-        """
-        Old system compatibility.
-        """
-
-        if len(candles) < 2:
-            return None
-
-        prev_close = candles[-2]["close"]
-        last_close = candles[-1]["close"]
-
-        price_return = (
-            last_close - prev_close
-        ) / prev_close
-
-        return {
-            "return": price_return
-        }
-
-    # ─────────────────────────────────────────────
-    # LEGACY 5M FEATURE
-    # ─────────────────────────────────────────────
-    def build_5m_legacy(self, candle_5m: dict):
-        """
-        Old compatibility path.
-        """
-
-        if candle_5m is None:
-            return {}
-
-        open_price = candle_5m["open"]
-        close_price = candle_5m["close"]
-
-        return {
-            "return_5m": (
-                close_price - open_price
-            ) / open_price
+            "vol_15": vol_15,
+            "rsi": rsi,
+            "ema_fast": ema_fast,
+            "ema_slow": ema_slow,
+            "ema_spread": ema_spread,
+            "trend_slope": trend_slope
         }

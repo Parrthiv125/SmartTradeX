@@ -5,12 +5,11 @@ def run_test():
 
     engine = FeatureEngine()
 
-    # Fake candle data
     candles = []
 
     price = 50000
 
-    for i in range(25):
+    for i in range(60):
         candles.append({"close": price + i * 10})
 
     features = engine.build_features(candles)
@@ -18,7 +17,7 @@ def run_test():
     print(features)
 
     assert features is not None
-    print("Feature engine ML test passed")
+    print("Expanded feature test passed")
 
 
 if __name__ == "__main__":
