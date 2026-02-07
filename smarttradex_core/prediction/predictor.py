@@ -1,3 +1,5 @@
+# smarttradex_core/prediction/predictor.py
+
 import joblib
 import os
 import numpy as np
@@ -6,10 +8,9 @@ import pandas as pd
 
 class Predictor:
     """
-    AI + Rule Hybrid Predictor
+    ML-first predictor with rule fallback.
 
-    Uses ML model for prediction.
-    Falls back to rule logic if model unavailable.
+    Consumes full feature vector from FeatureEngine.
     """
 
     def __init__(self):
@@ -22,39 +23,42 @@ class Predictor:
             self.model = joblib.load(model_path)
             print("[PREDICTOR] ML model loaded")
         else:
-            print("[PREDICTOR] No model found → using rules")
+            print("[PREDICTOR] No model found → fallback rules active")
 
     # ─────────────────────────────────────────────
     # MAIN PREDICTION
     # ─────────────────────────────────────────────
-    def predict(self, features_1m: dict, features_5m: dict | None = None):
+    def predict(self, features: dict):
 
-        r1 = features_1m.get("return", 0)
-        r5 = 0
-
-        if features_5m:
-            r5 = features_5m.get("return", 0)
+        if features is None:
+            return {
+                "action": "HOLD",
+                "confidence": 0,
+                "reason": "no_features"
+            }
 
         # =========================================================
-        # ML PREDICTION PATH
+        # ML INFERENCE
         # =========================================================
         if self.model:
 
             feature_vector = pd.DataFrame([{
-                "ret_1": r1,
-                "ret_5": r5,
-                "ret_15": 0,
-                "vol_5": abs(r1),
-                "vol_15": abs(r5)
+                "ret_1": features["ret_1"],
+                "ret_5": features["ret_5"],
+                "ret_15": features["ret_15"],
+                "vol_5": features["vol_5"],
+                "vol_15": features["vol_15"]
             }])
 
             pred_return = self.model.predict(feature_vector)[0]
 
-            # Convert return → signal
+            # ───────── SIGNAL MAPPING ─────────
             if pred_return > 0.0005:
                 action = "BUY"
+
             elif pred_return < -0.0005:
                 action = "SELL"
+
             else:
                 action = "HOLD"
 
@@ -77,6 +81,9 @@ class Predictor:
         # =========================================================
         # RULE FALLBACK
         # =========================================================
+        r1 = features["ret_1"]
+        r5 = features["ret_5"]
+
         THRESHOLD_1M = 0.0005
         THRESHOLD_5M = 0.0010
 
@@ -97,10 +104,8 @@ class Predictor:
         }
 
         print(
-            f"[RULE] 1m={round(r1,5)} "
-            f"5m={round(r5,5)} → {action}"
+            f"[RULE] ret1={round(r1,5)} "
+            f"ret5={round(r5,5)} → {action}"
         )
-        print("PREDICTION OUTPUT →", prediction)
 
         return prediction
-
