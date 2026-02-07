@@ -1,12 +1,4 @@
-# api_server/main.py
-
 from fastapi import FastAPI
-
-# =========================
-# Core Engine
-# =========================
-from smarttradex_core.engine import TradingEngine
-from smarttradex_core.lifecycle import EngineRuntime
 
 # =========================
 # API Routes
@@ -16,7 +8,7 @@ from api_server.routes import state as state_routes
 from api_server.routes import trading as trading_routes
 from api_server.routes import markers as markers_routes
 from api_server.routes import config as config_routes
-from api_server.routes.trading import router as trading_router
+from api_server.routes import market as market_routes
 
 # =========================
 # FastAPI App
@@ -24,13 +16,26 @@ from api_server.routes.trading import router as trading_router
 app = FastAPI(title="SmartTradeX API")
 
 # =========================
-# SINGLE GLOBAL INSTANCES
+# MOCK ENGINE (TEMPORARY)
 # =========================
-engine = TradingEngine()
-runtime = EngineRuntime(engine)
+class MockEngine:
+    def status(self):
+        return "stopped"
 
-app.state.engine = engine
-app.state.runtime = runtime
+    def is_running(self):
+        return False
+
+
+class MockRuntime:
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+
+app.state.engine = MockEngine()
+app.state.runtime = MockRuntime()
 
 # =========================
 # Route Registration
@@ -40,11 +45,12 @@ app.include_router(state_routes.router)
 app.include_router(config_routes.router)
 app.include_router(trading_routes.router)
 app.include_router(markers_routes.router)
-app.include_router(trading_router)
 
 # =========================
 # Health Check
 # =========================
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "engine": "mock"}
+app.include_router(market_routes.router)
+

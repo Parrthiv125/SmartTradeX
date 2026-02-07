@@ -1,22 +1,66 @@
-# gui/app.py
-
 import streamlit as st
+import pandas as pd
 
-st.set_page_config(
-    page_title="SmartTradeX",
-    layout="wide"
+from services.api_client import (
+    get_candles,
+    get_markers,
+    get_trades,
+    start_engine,
+    stop_engine,
 )
 
-st.title("SmartTradeX Dashboard")
+# --------------------------------
+# Page setup
+# --------------------------------
+st.set_page_config(page_title="SmartTradeX", layout="wide")
+st.title("📈 SmartTradeX — Paper Trading Dashboard")
 
-st.markdown(
-    """
-    ### Welcome to SmartTradeX 🚀
+# --------------------------------
+# Control buttons
+# --------------------------------
+col1, col2 = st.columns(2)
 
-    Use the **sidebar** to navigate between:
-    - **Live Market**
-    - **Paper Trading**
-    """
-)
+if col1.button("▶ Start Trader"):
+    start_engine()
+    st.success("Trader started")
 
-st.info("Select a page from the sidebar to get started.")
+if col2.button("⏹ Stop Trader"):
+    stop_engine()
+    st.warning("Trader stopped")
+
+st.divider()
+
+# --------------------------------
+# Market candles
+# --------------------------------
+st.subheader("Market Candles")
+
+candles_data = get_candles()
+candles = candles_data.get("candles", [])
+
+if candles:
+    df_candles = pd.DataFrame(candles)
+    st.dataframe(df_candles, use_container_width=True)
+else:
+    st.info("No candle data available")
+
+# --------------------------------
+# Markers
+# --------------------------------
+st.subheader("Markers")
+
+markers = get_markers()
+st.json(markers)
+
+# --------------------------------
+# Trades
+# --------------------------------
+st.subheader("Trades")
+
+trades = get_trades()
+
+if trades:
+    df_trades = pd.DataFrame(trades)
+    st.dataframe(df_trades, use_container_width=True)
+else:
+    st.info("No trades available")
