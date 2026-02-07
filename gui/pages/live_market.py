@@ -1,10 +1,11 @@
 import streamlit as st
-import time
+from streamlit_autorefresh import st_autorefresh
 
 from services.api_client import (
     get_state,
     get_candles,
     get_markers,
+    get_live_price,
 )
 
 from components.chart import render_chart
@@ -22,6 +23,14 @@ st.set_page_config(
 )
 
 st.title("📈 Live Market")
+st.markdown("🟢 **Data Source: Binance (REAL)**")
+
+
+# ─────────────────────────────────────────────
+# AUTO REFRESH (every 2 seconds)
+# ─────────────────────────────────────────────
+
+st_autorefresh(interval=2000, key="live_market_refresh")
 
 
 # ─────────────────────────────────────────────
@@ -33,7 +42,6 @@ st.subheader("Live Engine State")
 try:
     state = get_state()
     engine_state = state or {}
-
     render_engine_controls(engine_state)
 
 except Exception as e:
@@ -43,7 +51,7 @@ except Exception as e:
 
 
 # ─────────────────────────────────────────────
-# Market Data (SEPARATE, CORRECT)
+# Market Data (REAL BINANCE)
 # ─────────────────────────────────────────────
 
 st.divider()
@@ -51,7 +59,6 @@ st.divider()
 try:
     candles_resp = get_candles()
     markers = get_markers()
-
     candles = candles_resp.get("candles", [])
 
 except Exception as e:
@@ -61,50 +68,45 @@ except Exception as e:
 
 
 if not candles:
-    st.info("Waiting for market data...")
+    st.info("Waiting for Binance market data...")
 else:
+    # -----------------------------
+    # Live metrics
+    # -----------------------------
     col1, col2 = st.columns(2)
 
     with col1:
-        st.metric(
-            label="BTC Price",
-            value=candles[-1].get("close", "—")
-        )
+        try:
+            live_price = get_live_price()
+            st.metric(
+                label="BTC Live Price",
+                value=live_price
+            )
+        except Exception:
+            st.metric(
+                label="BTC Live Price",
+                value="—"
+            )
 
     with col2:
-        last_marker = (
-            markers[-1].get("type")
-            if markers else "NONE"
-        )
-
+        last_marker = markers[-1].get("type") if markers else "NONE"
         st.metric(
             label="Last Marker",
             value=last_marker
         )
 
-    # ─────────────────────────────────────────────
-    # Chart with markers (RESTORED)
-    # ─────────────────────────────────────────────
-
+    # -----------------------------
+    # Chart (REAL + LIVE)
+    # -----------------------------
     render_chart(
         candles=candles,
         markers=markers
     )
 
-    # ─────────────────────────────────────────────
+    # -----------------------------
     # Marker list
-    # ─────────────────────────────────────────────
-
+    # -----------------------------
     render_markers(markers)
 
 
-st.caption("Live data updates automatically while engine is running.")
-
-
-# ─────────────────────────────────────────────
-# Controlled auto-refresh
-# ─────────────────────────────────────────────
-
-if engine_state.get("running"):
-    time.sleep(1)
-    st.rerun()
+st.caption("Chart uses real Binance candles with live price overlay.")
