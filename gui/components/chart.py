@@ -7,9 +7,9 @@ from services.api_client import get_live_price
 
 def render_chart(candles: list, markers: list | None = None):
     """
-    Render REAL Binance price chart with:
-    - Closed candle prices
-    - Live Binance price overlay
+    Render REAL live BTC price line chart with:
+    - Historical candle close prices
+    - Live price appended as last point (smooth live line)
     - BUY / SELL markers
     """
 
@@ -24,41 +24,46 @@ def render_chart(candles: list, markers: list | None = None):
     # Prepare candle dataframe
     # -----------------------------
     df = pd.DataFrame(candles)
-
-    # Binance provides ISO timestamps in `time`
     df["time"] = pd.to_datetime(df["time"])
 
-    fig = go.Figure()
+    # -----------------------------
+    # Append LIVE price as last point
+    # -----------------------------
+    try:
+        live_price = get_live_price()
+
+        live_row = {
+            "time": pd.Timestamp.utcnow(),
+            "close": live_price,
+        }
+
+        df = pd.concat(
+            [df, pd.DataFrame([live_row])],
+            ignore_index=True
+        )
+
+    except Exception:
+        # Live price unavailable → continue with candle data only
+        live_price = None
 
     # -----------------------------
-    # Closed candle price line
+    # Build chart
     # -----------------------------
+    fig = go.Figure()
+
+    # Smooth continuous live line
     fig.add_trace(
         go.Scatter(
             x=df["time"],
             y=df["close"],
             mode="lines",
-            name="Binance (closed candles)",
-            line=dict(width=2, color="#1f77b4"),
+            name="BTC Price (Live)",
+            line=dict(
+                width=2,
+                color="#4da6ff",
+            ),
         )
     )
-
-    # -----------------------------
-    # Live Binance price overlay
-    # -----------------------------
-    try:
-        live_price = get_live_price()
-
-        fig.add_hline(
-            y=live_price,
-            line_dash="dot",
-            line_color="yellow",
-            annotation_text=f"Live Price: {live_price}",
-            annotation_position="top left",
-        )
-    except Exception:
-        # Live price unavailable → chart still works
-        pass
 
     # -----------------------------
     # BUY / SELL markers
@@ -105,7 +110,7 @@ def render_chart(candles: list, markers: list | None = None):
         height=520,
         margin=dict(l=20, r=20, t=40, b=20),
         xaxis_title="Time",
-        yaxis_title="Price",
+        yaxis_title="BTC Price",
         showlegend=True,
     )
 
