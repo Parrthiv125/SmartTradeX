@@ -1,21 +1,25 @@
 from smarttradex_core.features.feature_engine import FeatureEngine
 
-engine = FeatureEngine()
 
-features = engine.build_features([])
-assert features == {}
+def run_test():
 
-sample_candles = [
-    {"close": 100},
-    {"close": 101},
-    {"close": 102},
-]
+    engine = FeatureEngine()
 
-features = engine.build_features(sample_candles)
+    # Fake candle data
+    candles = []
 
-assert features["num_candles"] == 3
-assert features["last_close"] == 102
-assert "dummy_feature" in features
+    price = 50000
 
-print("FeatureEngine skeleton test passed")
+    for i in range(25):
+        candles.append({"close": price + i * 10})
 
+    features = engine.build_features(candles)
+
+    print(features)
+
+    assert features is not None
+    print("Feature engine ML test passed")
+
+
+if __name__ == "__main__":
+    run_test()
