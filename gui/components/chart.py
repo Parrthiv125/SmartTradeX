@@ -2,45 +2,71 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+from services.api_client import get_live_price
+
 
 def render_chart(candles: list, markers: list | None = None):
     """
-    Render price chart with BUY / SELL overlays.
-    GUI ONLY — no trading logic.
+    Render REAL live BTC price line chart with:
+    - Historical candle close prices
+    - Live price appended as last point (smooth live line)
+    - BUY / SELL markers
     """
 
     # -----------------------------
     # Guard: no candle data
     # -----------------------------
     if not candles:
-        st.info("No market data available.")
+        st.info("Waiting for Binance market data...")
         return
 
     # -----------------------------
     # Prepare candle dataframe
     # -----------------------------
     df = pd.DataFrame(candles)
-
-    # ✅ FIX: backend provides `time`, not `timestamp`
     df["time"] = pd.to_datetime(df["time"])
 
-    fig = go.Figure()
+    # -----------------------------
+    # Append LIVE price as last point
+    # -----------------------------
+    try:
+        live_price = get_live_price()
+
+        live_row = {
+            "time": pd.Timestamp.utcnow(),
+            "close": live_price,
+        }
+
+        df = pd.concat(
+            [df, pd.DataFrame([live_row])],
+            ignore_index=True
+        )
+
+    except Exception:
+        # Live price unavailable → continue with candle data only
+        live_price = None
 
     # -----------------------------
-    # Price line
+    # Build chart
     # -----------------------------
+    fig = go.Figure()
+
+    # Smooth continuous live line
     fig.add_trace(
         go.Scatter(
             x=df["time"],
             y=df["close"],
             mode="lines",
-            name="Price",
-            line=dict(width=2),
+            name="BTC Price (Live)",
+            line=dict(
+                width=2,
+                color="#4da6ff",
+            ),
         )
     )
 
     # -----------------------------
-    # Marker overlays (SAFE)
+    # BUY / SELL markers
     # -----------------------------
     if markers:
         buys = [m for m in markers if m.get("type") == "BUY"]
@@ -81,10 +107,10 @@ def render_chart(candles: list, markers: list | None = None):
     # -----------------------------
     fig.update_layout(
         template="plotly_dark",
-        height=500,
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=520,
+        margin=dict(l=20, r=20, t=40, b=20),
         xaxis_title="Time",
-        yaxis_title="Price",
+        yaxis_title="BTC Price",
         showlegend=True,
     )
 
