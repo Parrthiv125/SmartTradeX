@@ -8,20 +8,27 @@ import joblib
 # ─────────────────────────────────────────────
 # LOAD DATASET
 # ─────────────────────────────────────────────
-df = pd.read_csv(r"D:\SmartTradeX\clean_data.csv")
+df = pd.read_csv(
+    r"D:\SmartTradeX\btc_expanded_features.csv"
+)
 
 print("Dataset loaded:", df.shape)
 
 
 # ─────────────────────────────────────────────
-# FEATURES / TARGET
+# EXPANDED FEATURES
 # ─────────────────────────────────────────────
 features = [
     "ret_1",
     "ret_5",
     "ret_15",
     "vol_5",
-    "vol_15"
+    "vol_15",
+    "rsi",
+    "ema_fast",
+    "ema_slow",
+    "ema_spread",
+    "trend_slope"
 ]
 
 X = df[features]
