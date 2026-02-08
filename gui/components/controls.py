@@ -13,8 +13,6 @@ def render_engine_controls(engine_state):
     No trading or engine logic here.
     """
 
-    st.subheader("Engine Controls")
-
     running = engine_state.get("running", False)
 
     c1, c2, c3 = st.columns(3)

@@ -13,10 +13,9 @@ from components.marker_layer import render_markers
 from components.controls import render_engine_controls
 
 
-# ─────────────────────────────────────────────
+# ------------------------------------------------
 # Page config
-# ─────────────────────────────────────────────
-
+# ------------------------------------------------
 st.set_page_config(
     page_title="Live Market",
     layout="wide"
@@ -24,24 +23,31 @@ st.set_page_config(
 
 st.title("📈 Live Market")
 st.markdown("🟢 **Data Source: Binance (REAL)**")
+st.divider()
 
 
-# ─────────────────────────────────────────────
+# ------------------------------------------------
 # AUTO REFRESH (every 2 seconds)
-# ─────────────────────────────────────────────
-
+# ------------------------------------------------
 st_autorefresh(interval=2000, key="live_market_refresh")
 
 
-# ─────────────────────────────────────────────
-# Engine State (ONLY engine info)
-# ─────────────────────────────────────────────
-
-st.subheader("Live Engine State")
+# ------------------------------------------------
+# Engine Controls Section
+# ------------------------------------------------
+st.subheader("Engine Controls")
+st.caption("Engine control and current running state")
 
 try:
     state = get_state()
     engine_state = state or {}
+
+    # -------- ENGINE STATUS INDICATOR --------
+    if engine_state.get("running"):
+        st.success("🟢 Engine Running")
+    else:
+        st.warning("🔴 Engine Stopped")
+
     render_engine_controls(engine_state)
 
 except Exception as e:
@@ -50,10 +56,9 @@ except Exception as e:
     st.stop()
 
 
-# ─────────────────────────────────────────────
-# Market Data (REAL BINANCE)
-# ─────────────────────────────────────────────
-
+# ------------------------------------------------
+# Market Data Section
+# ------------------------------------------------
 st.divider()
 
 try:
@@ -70,10 +75,13 @@ except Exception as e:
 if not candles:
     st.info("Waiting for Binance market data...")
 else:
-    # -----------------------------
-    # Live metrics
-    # -----------------------------
-    col1, col2 = st.columns(2)
+
+    # ------------------------------------------------
+    # Metrics Section
+    # ------------------------------------------------
+    st.subheader("Live Market Metrics")
+
+    spacer1, col1, col2, spacer2 = st.columns([1, 3, 3, 1])
 
     with col1:
         try:
@@ -95,17 +103,21 @@ else:
             value=last_marker
         )
 
-    # -----------------------------
-    # Chart (REAL + LIVE)
-    # -----------------------------
+    # ------------------------------------------------
+    # Chart Section
+    # ------------------------------------------------
+    st.subheader("BTC Market Chart")
+
     render_chart(
         candles=candles,
         markers=markers
     )
 
-    # -----------------------------
-    # Marker list
-    # -----------------------------
+    # ------------------------------------------------
+    # Marker Activity Section
+    # ------------------------------------------------
+    st.subheader("Recent Marker Activity")
+
     render_markers(markers)
 
 
