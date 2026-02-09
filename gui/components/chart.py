@@ -5,22 +5,31 @@ import pandas as pd
 
 def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
 
-    if not candles:
+    # ---------- SAFETY ----------
+    if candles is None or len(candles) == 0:
         st.warning("No candle data yet...")
         return
 
     df = pd.DataFrame(candles)
 
-    # ensure correct types
-    df["time"] = pd.to_datetime(df["time"])
+    # ---------- FIX TIME ----------
+    # backend gives milliseconds timestamp
+    if "time" in df.columns:
+        df["time"] = pd.to_datetime(df["time"], unit="ms")
+    elif "timestamp" in df.columns:
+        df["time"] = pd.to_datetime(df["timestamp"], unit="ms")
+
+    # numeric conversion
     df["open"] = df["open"].astype(float)
     df["high"] = df["high"].astype(float)
     df["low"] = df["low"].astype(float)
     df["close"] = df["close"].astype(float)
 
+    df = df.sort_values("time")
+
     fig = go.Figure()
 
-    # ---------- line ----------
+    # ---------- LINE ----------
     if chart_mode == "Line":
         fig.add_trace(
             go.Scatter(
@@ -28,10 +37,11 @@ def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
                 y=df["close"],
                 mode="lines",
                 name="BTC Price",
+                line=dict(width=2),
             )
         )
 
-    # ---------- candle ----------
+    # ---------- CANDLE ----------
     else:
         fig.add_trace(
             go.Candlestick(
@@ -44,26 +54,20 @@ def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
             )
         )
 
-    # ---------- marker filter (IMPORTANT FIX) ----------
+    # ---------- MARKERS ----------
     if markers:
-        min_price = df["low"].min()
-        max_price = df["high"].max()
-
         buy_x, buy_y, sell_x, sell_y = [], [], [], []
 
         for m in markers:
+            t = pd.to_datetime(m["time"])
             price = float(m["price"])
 
-            # ignore markers far outside chart range
-            if price < min_price * 0.7 or price > max_price * 1.3:
-                continue
-
             if m.get("type") == "BUY":
-                buy_x.append(m["time"])
+                buy_x.append(t)
                 buy_y.append(price)
 
             if m.get("type") == "SELL":
-                sell_x.append(m["time"])
+                sell_x.append(t)
                 sell_y.append(price)
 
         if buy_x:
@@ -92,6 +96,8 @@ def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
         template="plotly_dark",
         height=520,
         margin=dict(l=10, r=10, t=30, b=10),
+        xaxis_title="Time",
+        yaxis_title="Price"
     )
 
     st.plotly_chart(fig, width="stretch")
