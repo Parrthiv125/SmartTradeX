@@ -11,6 +11,8 @@ from services.api_client import (
 from components.chart import render_chart
 from components.marker_layer import render_markers
 from components.controls import render_engine_controls
+from layouts.dashboard_layout import dashboard_container
+
 
 
 # ------------------------------------------------
@@ -21,9 +23,10 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📈 Live Market")
-st.markdown("🟢 **Data Source: Binance (REAL)**")
-st.divider()
+page = dashboard_container(
+    "📈 Live Market",
+    "🟢 Data Source: Binance (REAL)"
+)
 
 
 # ------------------------------------------------
@@ -42,12 +45,7 @@ try:
     state = get_state()
     engine_state = state or {}
 
-    # -------- ENGINE STATUS INDICATOR --------
-    if engine_state.get("running"):
-        st.success("🟢 Engine Running")
-    else:
-        st.warning("🔴 Engine Stopped")
-
+    # Only render controls (status handled inside controls.py)
     render_engine_controls(engine_state)
 
 except Exception as e:
