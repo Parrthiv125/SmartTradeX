@@ -30,15 +30,17 @@ def safe_get(endpoint, retries=2, delay=0.3):
 
 
 # ============================================================
-# REAL BINANCE CANDLES (CLOSED OHLCV)
+# REAL BINANCE CANDLES (TIMEFRAME SUPPORT)
 # ============================================================
 
-def get_candles():
+def get_candles(interval="5m"):
     """
-    Fetch REAL Binance OHLCV candles (5m).
-    This is the historical price source for charts.
+    Fetch REAL Binance OHLCV candles with selectable timeframe.
+
+    Supported intervals:
+    1m, 3m, 5m, 15m, 1h, 4h, 1d
     """
-    return safe_get("/market/candles")
+    return safe_get(f"/market/candles?interval={interval}")
 
 
 # ============================================================

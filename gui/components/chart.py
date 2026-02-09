@@ -4,70 +4,85 @@ import plotly.graph_objects as go
 
 from services.api_client import get_live_price
 
+WINDOW = 120  # visible candles
+
 
 def render_chart(candles: list, markers: list | None = None):
     """
-    Render REAL live BTC price line chart with:
-    - Historical candle close prices
-    - Live price appended as last point (smooth live line)
+    Render REAL BTC chart with:
+    - Line / Candlestick toggle
+    - Sliding window behavior (TradingView style)
+    - Live price appended
     - BUY / SELL markers
     """
 
-    # -----------------------------
-    # Guard: no candle data
-    # -----------------------------
     if not candles:
         st.info("Waiting for Binance market data...")
         return
 
-    # -----------------------------
-    # Prepare candle dataframe
-    # -----------------------------
+    chart_mode = st.radio(
+        "Chart Type",
+        ["Line", "Candlestick"],
+        horizontal=True,
+    )
+
     df = pd.DataFrame(candles)
     df["time"] = pd.to_datetime(df["time"])
 
     # -----------------------------
-    # Append LIVE price as last point
+    # SLIDING WINDOW
+    # -----------------------------
+    df = df.tail(WINDOW)
+
+    # -----------------------------
+    # Append live price
     # -----------------------------
     try:
         live_price = get_live_price()
 
-        live_row = {
-            "time": pd.Timestamp.utcnow(),
-            "close": live_price,
-        }
-
         df = pd.concat(
-            [df, pd.DataFrame([live_row])],
-            ignore_index=True
+            [
+                df,
+                pd.DataFrame(
+                    [{
+                        "time": pd.Timestamp.utcnow(),
+                        "open": live_price,
+                        "high": live_price,
+                        "low": live_price,
+                        "close": live_price,
+                    }]
+                )
+            ],
+            ignore_index=True,
         )
-
     except Exception:
-        # Live price unavailable → continue with candle data only
-        live_price = None
+        pass
 
-    # -----------------------------
-    # Build chart
-    # -----------------------------
     fig = go.Figure()
 
-    # Smooth continuous live line
-    fig.add_trace(
-        go.Scatter(
-            x=df["time"],
-            y=df["close"],
-            mode="lines",
-            name="BTC Price (Live)",
-            line=dict(
-                width=2,
-                color="#4da6ff",
-            ),
+    if chart_mode == "Line":
+        fig.add_trace(
+            go.Scatter(
+                x=df["time"],
+                y=df["close"],
+                mode="lines",
+                name="BTC Price",
+                line=dict(width=2),
+            )
         )
-    )
+    else:
+        fig.add_trace(
+            go.Candlestick(
+                x=df["time"],
+                open=df["open"],
+                high=df["high"],
+                low=df["low"],
+                close=df["close"],
+                name="BTC Candles",
+            )
+        )
 
-    # -----------------------------
-    # BUY / SELL markers
-    # -----------------------------
+    # markers
     if markers:
         buys = [m for m in markers if m.get("type") == "BUY"]
         sells = [m for m in markers if m.get("type") == "SELL"]
@@ -79,11 +94,7 @@ def render_chart(candles: list, markers: list | None = None):
                     y=[m["price"] for m in buys],
                     mode="markers",
                     name="BUY",
-                    marker=dict(
-                        symbol="triangle-up",
-                        size=12,
-                        color="green",
-                    ),
+                    marker=dict(symbol="triangle-up", size=12, color="green"),
                 )
             )
 
@@ -94,17 +105,10 @@ def render_chart(candles: list, markers: list | None = None):
                     y=[m["price"] for m in sells],
                     mode="markers",
                     name="SELL",
-                    marker=dict(
-                        symbol="triangle-down",
-                        size=12,
-                        color="red",
-                    ),
+                    marker=dict(symbol="triangle-down", size=12, color="red"),
                 )
             )
 
-    # -----------------------------
-    # Layout
-    # -----------------------------
     fig.update_layout(
         template="plotly_dark",
         height=520,

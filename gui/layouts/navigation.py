@@ -4,16 +4,18 @@ import streamlit as st
 def render_navigation():
     """
     Global sidebar navigation for SmartTradeX.
-    Keeps page structure consistent.
+    Only links to pages that currently exist to avoid Streamlit errors.
     """
 
-    st.sidebar.title("SmartTradeX")
+    with st.sidebar:
+        st.title("SmartTradeX")
+        st.markdown("### Navigation")
 
-    st.sidebar.markdown("### Navigation")
+        # EXISTING pages only
+        st.page_link("app.py", label="Dashboard", icon="📊")
+        st.page_link("pages/live_market.py", label="Live Market", icon="📈")
+        st.page_link("pages/paper_trading.py", label="Paper Trading", icon="💼")
+        st.page_link("pages/analytics.py", label="Analytics", icon="📉")
 
-    st.sidebar.page_link("app.py", label="App Home")
-    st.sidebar.page_link("pages/live_market.py", label="Live Market")
-    st.sidebar.page_link("pages/paper_trading.py", label="Paper Trading")
-
-    st.sidebar.markdown("---")
-    st.sidebar.caption("SmartTradeX AI Trading Platform")
+        st.markdown("---")
+        st.caption("SmartTradeX AI Trading Platform")

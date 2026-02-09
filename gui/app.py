@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+from layouts.navigation import render_navigation
+
 from services.api_client import (
     get_candles,
     get_markers,
@@ -10,15 +12,24 @@ from services.api_client import (
 )
 
 # --------------------------------
+# PAGE CONFIG
+# --------------------------------
+st.set_page_config(page_title="SmartTradeX", layout="wide")
+
+# --------------------------------
+# LOAD CUSTOM SIDEBAR
+# --------------------------------
+render_navigation()
+
+# --------------------------------
 # Session state for engine status
 # --------------------------------
 if "engine_running" not in st.session_state:
     st.session_state.engine_running = False
 
 # --------------------------------
-# Page setup
+# PAGE HEADER
 # --------------------------------
-st.set_page_config(page_title="SmartTradeX", layout="wide")
 st.title("📈 SmartTradeX — Paper Trading Dashboard")
 
 # --------------------------------
