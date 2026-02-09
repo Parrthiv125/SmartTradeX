@@ -5,11 +5,13 @@ import joblib
 
 
 # ─────────────────────────────────────────────
-# LOAD DATASET
+# LOAD EXPANDED DATASET
 # ─────────────────────────────────────────────
-df = pd.read_csv(r"D:\SmartTradeX\clean_data.csv")
+df = pd.read_csv(
+    r"D:\SmartTradeX\btc_expanded_features.csv"
+)
 
-print("Dataset shape:", df.shape)
+print("Expanded dataset shape:", df.shape)
 
 
 # ─────────────────────────────────────────────
@@ -20,7 +22,12 @@ features = [
     "ret_5",
     "ret_15",
     "vol_5",
-    "vol_15"
+    "vol_15",
+    "rsi",
+    "ema_fast",
+    "ema_slow",
+    "ema_spread",
+    "trend_slope"
 ]
 
 X = df[features]
@@ -43,12 +50,12 @@ y_test = y[split_index:]
 # MODEL TRAINING
 # ─────────────────────────────────────────────
 model = RandomForestRegressor(
-    n_estimators=100,
-    max_depth=10,
+    n_estimators=120,
+    max_depth=12,
     n_jobs=-1
 )
 
-print("Training Random Forest...")
+print("Training Random Forest (expanded features)...")
 model.fit(X_train, y_train)
 
 
@@ -65,6 +72,9 @@ print("MSE:", mse)
 # ─────────────────────────────────────────────
 # SAVE MODEL
 # ─────────────────────────────────────────────
-joblib.dump(model, "rf_model.pkl")
+joblib.dump(
+    model,
+    "rf_expanded_model.pkl"
+)
 
-print("Model saved → rf_model.pkl")
+print("Model saved → rf_expanded_model.pkl")
