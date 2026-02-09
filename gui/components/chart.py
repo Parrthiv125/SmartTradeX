@@ -13,17 +13,20 @@ def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
     df = pd.DataFrame(candles)
 
     # ---------- FIX TIME ----------
-    # backend gives milliseconds timestamp
+    # Accept any backend format
     if "time" in df.columns:
-        df["time"] = pd.to_datetime(df["time"], unit="ms")
+        df["time"] = pd.to_datetime(df["time"], unit="ms", errors="coerce")
     elif "timestamp" in df.columns:
-        df["time"] = pd.to_datetime(df["timestamp"], unit="ms")
+        df["time"] = pd.to_datetime(df["timestamp"], unit="ms", errors="coerce")
+    elif "open_time" in df.columns:
+        df["time"] = pd.to_datetime(df["open_time"], unit="ms", errors="coerce")
+    else:
+        st.error("No valid timestamp column found")
+        return
 
     # numeric conversion
-    df["open"] = df["open"].astype(float)
-    df["high"] = df["high"].astype(float)
-    df["low"] = df["low"].astype(float)
-    df["close"] = df["close"].astype(float)
+    for c in ["open", "high", "low", "close"]:
+        df[c] = df[c].astype(float)
 
     df = df.sort_values("time")
 
@@ -59,7 +62,12 @@ def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
         buy_x, buy_y, sell_x, sell_y = [], [], [], []
 
         for m in markers:
-            t = pd.to_datetime(m["time"])
+            # FIX marker timestamp (important)
+            if "time" in m:
+                t = pd.to_datetime(m["time"], unit="ms", errors="coerce")
+            else:
+                continue
+
             price = float(m["price"])
 
             if m.get("type") == "BUY":
@@ -97,7 +105,8 @@ def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
         height=520,
         margin=dict(l=10, r=10, t=30, b=10),
         xaxis_title="Time",
-        yaxis_title="Price"
+        yaxis_title="Price",
+        xaxis_rangeslider_visible=False,
     )
 
     st.plotly_chart(fig, width="stretch")
