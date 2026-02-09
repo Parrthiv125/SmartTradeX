@@ -39,7 +39,7 @@ y = df["y"]
 # LOAD MODEL
 # ─────────────────────────────────────────────
 model = joblib.load(
-    "models_store/btc_5m_model/model.pkl"
+    "models_store/btc_5m_model/xgb_model.pkl"
 )
 
 print("Model loaded successfully")

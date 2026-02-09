@@ -1,21 +1,20 @@
 import pandas as pd
-import xgboost as xgb
-from sklearn.metrics import mean_squared_error
+import numpy as np
 import joblib
 
 
 # ─────────────────────────────────────────────
-# LOAD EXPANDED DATASET
+# LOAD DATASET
 # ─────────────────────────────────────────────
 df = pd.read_csv(
     r"D:\SmartTradeX\btc_expanded_features.csv"
 )
 
-print("Expanded dataset shape:", df.shape)
+print("Dataset loaded:", df.shape)
 
 
 # ─────────────────────────────────────────────
-# FEATURES / TARGET
+# FEATURES
 # ─────────────────────────────────────────────
 features = [
     "ret_1",
@@ -35,51 +34,68 @@ y = df["y"]
 
 
 # ─────────────────────────────────────────────
-# TRAIN / TEST SPLIT (time series safe)
+# LOAD MODEL
 # ─────────────────────────────────────────────
-split_index = int(len(df) * 0.8)
-
-X_train = X[:split_index]
-X_test = X[split_index:]
-
-y_train = y[:split_index]
-y_test = y[split_index:]
-
-
-# ─────────────────────────────────────────────
-# XGBOOST MODEL
-# ─────────────────────────────────────────────
-model = xgb.XGBRegressor(
-    n_estimators=300,
-    max_depth=6,
-    learning_rate=0.05,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    objective="reg:squarederror",
-    n_jobs=-1,
-    random_state=42
+model = joblib.load(
+    "models_store/btc_5m_model/model.pkl"
 )
 
-print("Training XGBoost (expanded features)...")
-model.fit(X_train, y_train)
+print("Model loaded")
 
 
 # ─────────────────────────────────────────────
-# EVALUATION
+# PREDICTIONS
 # ─────────────────────────────────────────────
-preds = model.predict(X_test)
-
-mse = mean_squared_error(y_test, preds)
-
-print("MSE:", mse)
+preds = model.predict(X)
 
 
 # ─────────────────────────────────────────────
-# SAVE MODEL
+# THRESHOLD TESTING
 # ─────────────────────────────────────────────
-joblib.dump(
-    model,
-    "xgb_expanded_model.pkl"
+thresholds = np.arange(0.0002, 0.003, 0.0002)
+
+results = []
+
+for t in thresholds:
+
+    trade_mask = abs(preds) > t
+
+    trade_preds = preds[trade_mask]
+    trade_actual = y[trade_mask]
+
+    if len(trade_preds) == 0:
+        continue
+
+    pred_dir = np.sign(trade_preds)
+    actual_dir = np.sign(trade_actual)
+
+    accuracy = (pred_dir == actual_dir).sum() / len(trade_preds)
+
+    results.append((t, accuracy, len(trade_preds)))
+
+
+# ─────────────────────────────────────────────
+# DISPLAY RESULTS
+# ─────────────────────────────────────────────
+print("\n=== THRESHOLD CALIBRATION ===")
+
+for t, acc, count in results:
+
+    print(
+        f"Threshold: {t:.4f} | "
+        f"Accuracy: {acc:.4f} | "
+        f"Signals: {count}"
+    )
+
+
+# ─────────────────────────────────────────────
+# BEST THRESHOLD
+# ─────────────────────────────────────────────
+best = max(results, key=lambda x: x[1])
+
+print("\n=== BEST THRESHOLD ===")
+print(
+    f"Threshold: {best[0]:.4f} | "
+    f"Accuracy: {best[1]:.4f} | "
+    f"Signals: {best[2]}"
 )
-
-print("Model saved → xgb_expanded_model.pkl")
