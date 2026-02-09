@@ -10,6 +10,12 @@ from services.api_client import (
 )
 
 # --------------------------------
+# Session state for engine status
+# --------------------------------
+if "engine_running" not in st.session_state:
+    st.session_state.engine_running = False
+
+# --------------------------------
 # Page setup
 # --------------------------------
 st.set_page_config(page_title="SmartTradeX", layout="wide")
@@ -22,11 +28,19 @@ col1, col2 = st.columns(2)
 
 if col1.button("▶ Start Trader"):
     start_engine()
-    st.success("Trader started")
+    st.session_state.engine_running = True
 
 if col2.button("⏹ Stop Trader"):
     stop_engine()
-    st.warning("Trader stopped")
+    st.session_state.engine_running = False
+
+# --------------------------------
+# Engine Status Indicator
+# --------------------------------
+if st.session_state.engine_running:
+    st.success("🟢 Engine Running")
+else:
+    st.error("🔴 Engine Stopped")
 
 st.divider()
 
@@ -48,7 +62,6 @@ else:
 # Markers
 # --------------------------------
 st.subheader("Markers")
-
 markers = get_markers()
 st.json(markers)
 
