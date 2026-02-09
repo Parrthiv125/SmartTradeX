@@ -5,11 +5,13 @@ import joblib
 
 
 # ─────────────────────────────────────────────
-# LOAD DATASET
+# LOAD EXPANDED DATASET
 # ─────────────────────────────────────────────
-df = pd.read_csv(r"D:\SmartTradeX\clean_data.csv")
+df = pd.read_csv(
+    r"D:\SmartTradeX\btc_expanded_features.csv"
+)
 
-print("Dataset shape:", df.shape)
+print("Expanded dataset shape:", df.shape)
 
 
 # ─────────────────────────────────────────────
@@ -20,7 +22,12 @@ features = [
     "ret_5",
     "ret_15",
     "vol_5",
-    "vol_15"
+    "vol_15",
+    "rsi",
+    "ema_fast",
+    "ema_slow",
+    "ema_spread",
+    "trend_slope"
 ]
 
 X = df[features]
@@ -43,12 +50,12 @@ y_test = y[split_index:]
 # MODEL TRAINING
 # ─────────────────────────────────────────────
 model = GradientBoostingRegressor(
-    n_estimators=200,
+    n_estimators=220,
     learning_rate=0.05,
     max_depth=3
 )
 
-print("Training Gradient Boosting...")
+print("Training Gradient Boosting (expanded features)...")
 model.fit(X_train, y_train)
 
 
@@ -65,6 +72,9 @@ print("MSE:", mse)
 # ─────────────────────────────────────────────
 # SAVE MODEL
 # ─────────────────────────────────────────────
-joblib.dump(model, "gb_model.pkl")
+joblib.dump(
+    model,
+    "gb_expanded_model.pkl"
+)
 
-print("Model saved → gb_model.pkl")
+print("Model saved → gb_expanded_model.pkl")
