@@ -1,112 +1,74 @@
-import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 
-def render_chart(candles: list, markers: list | None = None, chart_mode="Line"):
+def render_chart(candles, markers=None, chart_mode="Candlestick"):
+    """
+    Render BTC chart using real timestamps
+    """
 
-    # ---------- SAFETY ----------
-    if candles is None or len(candles) == 0:
-        st.warning("No candle data yet...")
+    if not candles:
+        st.warning("No candle data available")
         return
 
     df = pd.DataFrame(candles)
 
-    # ---------- FIX TIME ----------
-    # Accept any backend format
-    if "time" in df.columns:
-        df["time"] = pd.to_datetime(df["time"], unit="ms", errors="coerce")
-    elif "timestamp" in df.columns:
-        df["time"] = pd.to_datetime(df["timestamp"], unit="ms", errors="coerce")
-    elif "open_time" in df.columns:
-        df["time"] = pd.to_datetime(df["open_time"], unit="ms", errors="coerce")
-    else:
-        st.error("No valid timestamp column found")
-        return
-
-    # numeric conversion
-    for c in ["open", "high", "low", "close"]:
-        df[c] = df[c].astype(float)
+    # Ensure datetime
+    df["time"] = pd.to_datetime(df["time"], unit="ms", errors="coerce")
+    df = df.dropna(subset=["time"])
 
     df = df.sort_values("time")
 
-    fig = go.Figure()
-
-    # ---------- LINE ----------
     if chart_mode == "Line":
-        fig.add_trace(
-            go.Scatter(
-                x=df["time"],
-                y=df["close"],
-                mode="lines",
-                name="BTC Price",
-                line=dict(width=2),
-            )
-        )
-
-    # ---------- CANDLE ----------
-    else:
-        fig.add_trace(
-            go.Candlestick(
-                x=df["time"],
-                open=df["open"],
-                high=df["high"],
-                low=df["low"],
-                close=df["close"],
-                name="BTC Candles",
-            )
-        )
-
-    # ---------- MARKERS ----------
-    if markers:
-        buy_x, buy_y, sell_x, sell_y = [], [], [], []
-
-        for m in markers:
-            # FIX marker timestamp (important)
-            if "time" in m:
-                t = pd.to_datetime(m["time"], unit="ms", errors="coerce")
-            else:
-                continue
-
-            price = float(m["price"])
-
-            if m.get("type") == "BUY":
-                buy_x.append(t)
-                buy_y.append(price)
-
-            if m.get("type") == "SELL":
-                sell_x.append(t)
-                sell_y.append(price)
-
-        if buy_x:
-            fig.add_trace(
+        fig = go.Figure(
+            data=[
                 go.Scatter(
-                    x=buy_x,
-                    y=buy_y,
-                    mode="markers",
-                    marker=dict(symbol="triangle-up", size=12),
-                    name="BUY",
+                    x=df["time"],
+                    y=df["close"],
+                    mode="lines",
+                    name="BTC Price",
                 )
-            )
+            ]
+        )
 
-        if sell_x:
+    else:
+        fig = go.Figure(
+            data=[
+                go.Candlestick(
+                    x=df["time"],
+                    open=df["open"],
+                    high=df["high"],
+                    low=df["low"],
+                    close=df["close"],
+                    name="BTC",
+                )
+            ]
+        )
+
+    # markers
+    if markers:
+        mdf = pd.DataFrame(markers)
+        if not mdf.empty:
+            mdf["time"] = pd.to_datetime(mdf["time"], unit="ms", errors="coerce")
+
             fig.add_trace(
                 go.Scatter(
-                    x=sell_x,
-                    y=sell_y,
+                    x=mdf["time"],
+                    y=mdf["price"],
                     mode="markers",
-                    marker=dict(symbol="triangle-down", size=12),
-                    name="SELL",
+                    marker=dict(size=8),
+                    name="Signals",
                 )
             )
 
     fig.update_layout(
-        template="plotly_dark",
-        height=520,
-        margin=dict(l=10, r=10, t=30, b=10),
+        height=600,
+        margin=dict(l=10, r=10, t=10, b=10),
         xaxis_title="Time",
-        yaxis_title="Price",
+        yaxis_title="BTC Price",
         xaxis_rangeslider_visible=False,
+        template="plotly_dark",
     )
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)

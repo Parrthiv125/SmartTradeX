@@ -1,61 +1,54 @@
-class CandleBuffer:
-    def __init__(self, max_size: int = 100):
-        self.max_size = max_size
-        self.buffer = []
+import threading
+import pandas as pd
+from collections import deque
+from datetime import datetime
 
-    def add_candle(self, candle: dict):
-        """
-        Add a single 1-minute candle to the buffer.
-        """
-        self.buffer.append(candle)
+# ------------------------------------------
+# GLOBAL CANDLE BUFFER
+# ------------------------------------------
 
-        # keep buffer size bounded
-        if len(self.buffer) > self.max_size:
-            self.buffer.pop(0)
+MAX_CANDLES = 500
+_lock = threading.Lock()
 
-    def get_all(self):
-        """
-        Return all stored candles.
-        """
-        return self.buffer
+candle_buffer = deque(maxlen=MAX_CANDLES)
 
-    def get_last(self, n: int):
-        """
-        Return last n candles safely.
-        """
-        if n <= 0:
-            return []
-        return self.buffer[-n:]
 
-    def clear(self):
-        """
-        Clear the candle buffer.
-        """
-        self.buffer = []
+# ------------------------------------------
+# ADD / UPDATE CANDLE
+# ------------------------------------------
 
-    def get_last_5m_candle(self):
-        """
-        Aggregate last 5 one-minute candles into one 5-minute candle.
-        Returns None if not enough data.
-        """
+def update_candle(candle):
+    """
+    candle = {
+        "timestamp": int(ms),
+        "open": float,
+        "high": float,
+        "low": float,
+        "close": float,
+        "volume": float
+    }
+    """
+    with _lock:
+        if len(candle_buffer) > 0:
+            last = candle_buffer[-1]
 
-        if len(self.buffer) < 5:
-            return None
+            # update same candle
+            if last["timestamp"] == candle["timestamp"]:
+                candle_buffer[-1] = candle
+                return
 
-        last_five = self.buffer[-5:]
+        candle_buffer.append(candle)
 
-        open_price = last_five[0]["open"]
-        close_price = last_five[-1]["close"]
-        high_price = max(c["high"] for c in last_five)
-        low_price = min(c["low"] for c in last_five)
-        volume = sum(c["volume"] for c in last_five)
-        timestamp = last_five[-1]["timestamp"]
 
-        return {
-            "timestamp": timestamp,
-            "open": open_price,
-            "high": high_price,
-            "low": low_price,
-            "close": close_price,
-            "volume": volume,
-        }
+# ------------------------------------------
+# GET DATAFRAME
+# ------------------------------------------
+
+def get_candle_dataframe():
+    with _lock:
+        if not candle_buffer:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(list(candle_buffer))
+        df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
+        return df
