@@ -1,12 +1,17 @@
 import streamlit as st
+from layouts.navigation import render_navigation
 
 
 def dashboard_container(title: str, subtitle: str | None = None):
     """
     Standard dashboard page layout wrapper.
-    Keeps all pages visually consistent.
+    Ensures SAME sidebar across ALL pages.
     """
 
+    # GLOBAL SIDEBAR (important)
+    render_navigation()
+
+    # PAGE HEADER
     st.title(title)
 
     if subtitle:
@@ -14,5 +19,4 @@ def dashboard_container(title: str, subtitle: str | None = None):
 
     st.divider()
 
-    # return container for page content
     return st.container()
