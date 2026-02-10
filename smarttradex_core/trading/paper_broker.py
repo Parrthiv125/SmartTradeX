@@ -1,17 +1,14 @@
 import time
+from datetime import datetime
+
 from smarttradex_core.trading.position_sizer import PositionSizer
+from smarttradex_core.database.postgres_db import PostgresDB
 
 
 class PaperBroker:
     """
     Simulates paper trading with risk management.
-    Supports ONE open position at a time.
-    Includes:
-
-    • Position sizing
-    • Confidence filters
-    • Cooldown filter
-    • SL / TP / Time exits
+    Stores trades in Supabase PostgreSQL.
     """
 
     def __init__(self):
@@ -47,14 +44,16 @@ class PaperBroker:
         self.take_profit_pct = 0.02
         self.max_hold_seconds = 300
 
+        # ─────────────────────────────
+        # DATABASE CONNECTION
+        # ─────────────────────────────
+        self.db = PostgresDB()
+        self.current_trade_id = None
+
     # ─────────────────────────────────────────────
     # PROCESS MARKERS
     # ─────────────────────────────────────────────
     def process_marker(self, marker: dict, price: float):
-        """
-        Processes prediction marker and executes trades.
-        Returns trade dict if position closes.
-        """
 
         current_time = time.time()
 
@@ -62,11 +61,10 @@ class PaperBroker:
         confidence = marker.get("confidence", 0.0)
 
         # =========================================================
-        # ENTRY LOGIC (NO OPEN POSITION)
+        # ENTRY LOGIC
         # =========================================================
         if self.position is None:
 
-            # Cooldown check
             time_since_last_trade = (
                 current_time - self.last_trade_time
             )
@@ -74,7 +72,6 @@ class PaperBroker:
             if time_since_last_trade < self.trade_cooldown_seconds:
                 return None
 
-            # Confidence gate
             if (
                 action == "BUY"
                 and confidence >= self.entry_confidence_threshold
@@ -93,10 +90,24 @@ class PaperBroker:
                     "entry_confidence": float(confidence)
                 }
 
+                # ───────── DB INSERT ─────────
+                self.db.insert_trade(
+                    entry_time=datetime.now(),
+                    side="LONG",
+                    entry_price=price,
+                    quantity=qty,
+                    confidence=confidence,
+                    strategy="Momentum"
+                )
+
+                self.current_trade_id = (
+                    self.db.get_last_open_trade()
+                )
+
             return None
 
         # =========================================================
-        # EXIT LOGIC (OPEN POSITION)
+        # EXIT LOGIC
         # =========================================================
         entry_price = self.position["entry_price"]
         entry_time = self.position["entry_time"]
@@ -109,7 +120,6 @@ class PaperBroker:
 
         exit_reason = None
 
-        # ───────────── Risk exits ─────────────
         if pnl_pct <= self.stop_loss_pct:
             exit_reason = "STOP_LOSS"
 
@@ -122,7 +132,6 @@ class PaperBroker:
         elif action == "SELL":
             exit_reason = "SIGNAL_EXIT"
 
-        # ───────────── Confidence decay exit ─────────────
         elif confidence < self.exit_confidence_threshold:
             exit_reason = "CONFIDENCE_DROP"
 
@@ -133,43 +142,38 @@ class PaperBroker:
 
             trade = {
                 "side": "LONG",
-
-                # Prices
                 "entry_price": float(entry_price),
                 "exit_price": float(price),
-
-                # Quantity
                 "qty": float(qty),
-
-                # Time
                 "entry_time": float(entry_time),
                 "exit_time": float(current_time),
                 "timestamp": float(current_time),
-
-                # Performance
                 "pnl_pct": float(round(pnl_pct, 4)),
                 "pnl_value": float(round(pnl_value, 2)),
                 "hold_seconds": int(held_seconds),
-
-                # Metadata
                 "reason": exit_reason,
                 "entry_confidence": self.position.get(
                     "entry_confidence"
                 )
             }
 
-            # Store trade
+            # ───────── DB UPDATE ─────────
+            self.db.close_trade(
+                trade_id=self.current_trade_id,
+                exit_time=datetime.now(),
+                exit_price=price,
+                pnl_pct=pnl_pct * 100,
+                pnl_value=pnl_value
+            )
+
             self.trades.append(trade)
 
-            # Update capital
             self.capital += pnl_value
             self.position_sizer.update_capital(self.capital)
 
-            # Update cooldown timestamp
             self.last_trade_time = current_time
-
-            # Reset position
             self.position = None
+            self.current_trade_id = None
 
             return trade
 
@@ -179,5 +183,4 @@ class PaperBroker:
     # HISTORY ACCESS
     # ─────────────────────────────────────────────
     def get_trade_history(self):
-        """Return closed trades."""
         return self.trades
