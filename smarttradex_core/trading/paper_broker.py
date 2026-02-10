@@ -3,12 +3,14 @@ from datetime import datetime
 
 from smarttradex_core.trading.position_sizer import PositionSizer
 from smarttradex_core.database.postgres_db import PostgresDB
+from smarttradex_core.rl_controller.strategy_reinforcer import StrategyReinforcer
 
 
 class PaperBroker:
     """
     Simulates paper trading with risk management.
     Stores trades in Supabase PostgreSQL.
+    Applies reinforcement tracking.
     """
 
     def __init__(self):
@@ -50,6 +52,11 @@ class PaperBroker:
         self.db = PostgresDB()
         self.current_trade_id = None
 
+        # ─────────────────────────────
+        # STRATEGY REINFORCEMENT
+        # ─────────────────────────────
+        self.reinforcer = StrategyReinforcer()
+
     # ─────────────────────────────────────────────
     # PROCESS MARKERS
     # ─────────────────────────────────────────────
@@ -59,6 +66,7 @@ class PaperBroker:
 
         action = marker.get("action")
         confidence = marker.get("confidence", 0.0)
+        strategy_name = marker.get("strategy", "Momentum")
 
         # =========================================================
         # ENTRY LOGIC
@@ -87,7 +95,8 @@ class PaperBroker:
                     "qty": float(qty),
                     "entry_time": float(current_time),
                     "status": "OPEN",
-                    "entry_confidence": float(confidence)
+                    "entry_confidence": float(confidence),
+                    "strategy": strategy_name
                 }
 
                 # ───────── DB INSERT ─────────
@@ -97,7 +106,7 @@ class PaperBroker:
                     entry_price=price,
                     quantity=qty,
                     confidence=confidence,
-                    strategy="Momentum"
+                    strategy=strategy_name
                 )
 
                 self.current_trade_id = (
@@ -112,6 +121,7 @@ class PaperBroker:
         entry_price = self.position["entry_price"]
         entry_time = self.position["entry_time"]
         qty = self.position["qty"]
+        strategy_name = self.position["strategy"]
 
         pnl_pct = (price - entry_price) / entry_price
         pnl_value = pnl_pct * (qty * entry_price)
@@ -154,7 +164,8 @@ class PaperBroker:
                 "reason": exit_reason,
                 "entry_confidence": self.position.get(
                     "entry_confidence"
-                )
+                ),
+                "strategy": strategy_name
             }
 
             # ───────── DB UPDATE ─────────
@@ -166,11 +177,19 @@ class PaperBroker:
                 pnl_value=pnl_value
             )
 
+            # ───────── REINFORCEMENT RECORD ─────────
+            self.reinforcer.record_trade(
+                strategy=strategy_name,
+                pnl=pnl_value
+            )
+
             self.trades.append(trade)
 
+            # Update capital
             self.capital += pnl_value
             self.position_sizer.update_capital(self.capital)
 
+            # Reset position
             self.last_trade_time = current_time
             self.position = None
             self.current_trade_id = None
@@ -184,3 +203,9 @@ class PaperBroker:
     # ─────────────────────────────────────────────
     def get_trade_history(self):
         return self.trades
+
+    # ─────────────────────────────────────────────
+    # REINFORCEMENT SUMMARY
+    # ─────────────────────────────────────────────
+    def get_reinforcement_summary(self):
+        return self.reinforcer.summary()
