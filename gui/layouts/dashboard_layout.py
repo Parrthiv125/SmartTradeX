@@ -6,7 +6,6 @@ def dashboard_container(title: str, subtitle: str | None = None):
 
     render_navigation()
 
-    # Stronger KPI card styling
     st.markdown("""
     <style>
 
@@ -20,9 +19,14 @@ def dashboard_container(title: str, subtitle: str | None = None):
         margin-bottom: 10px;
     }
 
-    /* spacing between rows */
-    .block-container {
-        padding-top: 2rem;
+    /* PANEL CARD */
+    .dashboard-panel {
+        background: linear-gradient(180deg,#020617,#020617);
+        border: 1px solid #1f2937;
+        padding: 26px;
+        border-radius: 18px;
+        box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        margin-bottom: 20px;
     }
 
     </style>
@@ -35,4 +39,10 @@ def dashboard_container(title: str, subtitle: str | None = None):
 
     st.divider()
 
-    return st.container()
+
+def open_panel():
+    st.markdown('<div class="dashboard-panel">', unsafe_allow_html=True)
+
+
+def close_panel():
+    st.markdown('</div>', unsafe_allow_html=True)
