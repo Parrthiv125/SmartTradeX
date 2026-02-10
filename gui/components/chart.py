@@ -6,20 +6,25 @@ import streamlit as st
 def render_chart(candles, markers=None, chart_mode="Candlestick"):
     """
     Render BTC chart using real timestamps
+    Optimized for realtime perception
     """
 
     if not candles:
         st.warning("No candle data available")
         return
 
+    # -------------------------
+    # Dataframe preparation
+    # -------------------------
     df = pd.DataFrame(candles)
 
-    # Ensure datetime
     df["time"] = pd.to_datetime(df["time"], unit="ms", errors="coerce")
     df = df.dropna(subset=["time"])
-
     df = df.sort_values("time")
 
+    # -------------------------
+    # Chart base
+    # -------------------------
     if chart_mode == "Line":
         fig = go.Figure(
             data=[
@@ -31,7 +36,6 @@ def render_chart(candles, markers=None, chart_mode="Candlestick"):
                 )
             ]
         )
-
     else:
         fig = go.Figure(
             data=[
@@ -46,9 +50,12 @@ def render_chart(candles, markers=None, chart_mode="Candlestick"):
             ]
         )
 
-    # markers
+    # -------------------------
+    # Markers
+    # -------------------------
     if markers:
         mdf = pd.DataFrame(markers)
+
         if not mdf.empty:
             mdf["time"] = pd.to_datetime(mdf["time"], unit="ms", errors="coerce")
 
@@ -57,11 +64,22 @@ def render_chart(candles, markers=None, chart_mode="Candlestick"):
                     x=mdf["time"],
                     y=mdf["price"],
                     mode="markers",
-                    marker=dict(size=8),
+                    marker=dict(size=9),
                     name="Signals",
                 )
             )
 
+    # -------------------------
+    # Auto-scroll to latest candle
+    # -------------------------
+    last_time = df["time"].iloc[-1]
+    first_visible = df["time"].iloc[-120] if len(df) > 120 else df["time"].iloc[0]
+
+    fig.update_xaxes(range=[first_visible, last_time])
+
+    # -------------------------
+    # Layout
+    # -------------------------
     fig.update_layout(
         height=600,
         margin=dict(l=10, r=10, t=10, b=10),
