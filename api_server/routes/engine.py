@@ -25,3 +25,13 @@ def stop_engine(request: Request):
         "status": "ok",
         "message": "Engine stop requested (mock)"
     }
+
+@router.get("/state")
+def engine_state(request: Request):
+
+    runtime = request.app.state.runtime
+
+    if runtime and runtime.is_running():
+        return {"status": "running"}
+
+    return {"status": "stopped"}

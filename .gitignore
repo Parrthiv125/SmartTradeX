@@ -20,9 +20,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Model artifacts
-models_store/
-*.pkl
 
 # Datasets
 *.csv
