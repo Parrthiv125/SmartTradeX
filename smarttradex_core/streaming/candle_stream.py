@@ -151,7 +151,11 @@ def start_candle_stream():
     print("Loading historical candles...")
 
     # Bootstrap history → ML active instantly
-    LATEST_CANDLES = load_historical_candles(200)
+    try:
+        LATEST_CANDLES = load_historical_candles(200)
+    except Exception as e:
+        print("Historical candle load failed:", e)
+        LATEST_CANDLES = []
 
     print(f"Loaded {len(LATEST_CANDLES)} candles")
 
