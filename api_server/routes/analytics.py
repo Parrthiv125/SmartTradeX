@@ -8,7 +8,7 @@ from smarttradex_core.analytics.accuracy_tracker import AccuracyTracker
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
-db = PostgresDB()
+#db = PostgresDB()
 analytics = TradeAnalytics()
 accuracy_tracker = AccuracyTracker()
 
